@@ -152,10 +152,10 @@ export default function AdminPromotionsPage() {
                 <th className="text-left py-3 px-5 font-semibold text-muted dark:text-muted-dark text-xs uppercase tracking-wider">
                   Réduction
                 </th>
-                <th className="text-left py-3 px-5 font-semibold text-muted dark:text-muted-dark text-xs uppercase tracking-wider">
+                <th className="hidden md:table-cell text-left py-3 px-5 font-semibold text-muted dark:text-muted-dark text-xs uppercase tracking-wider">
                   Date d&apos;expiration
                 </th>
-                <th className="text-left py-3 px-5 font-semibold text-muted dark:text-muted-dark text-xs uppercase tracking-wider">
+                <th className="hidden sm:table-cell text-left py-3 px-5 font-semibold text-muted dark:text-muted-dark text-xs uppercase tracking-wider">
                   Statut
                 </th>
                 <th className="text-right py-3 px-5 font-semibold text-muted dark:text-muted-dark text-xs uppercase tracking-wider">
@@ -190,10 +190,10 @@ export default function AdminPromotionsPage() {
                       -{promo.discount}% <Percent className="w-3.5 h-3.5 ml-0.5" />
                     </span>
                   </td>
-                  <td className="py-3.5 px-5 text-muted dark:text-muted-dark">
+                  <td className="hidden md:table-cell py-3.5 px-5 text-muted dark:text-muted-dark">
                     {promo.end_date}
                   </td>
-                  <td className="py-3.5 px-5">
+                  <td className="hidden sm:table-cell py-3.5 px-5">
                     <span className={promo.status === "Active" ? "badge-available" : "badge-unavailable"}>
                       {promo.status === "Active" ? "Active" : "Expirée"}
                     </span>
