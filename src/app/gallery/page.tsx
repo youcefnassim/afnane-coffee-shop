@@ -120,7 +120,7 @@ export default function GalleryPage() {
                   onClick={() => openLightbox(index)}
                 >
                   {/* Real Content */}
-                  {item.media_type === "video" ? (
+                  {item.type === "video" ? (
                     <video
                       src={item.url}
                       muted
@@ -141,7 +141,7 @@ export default function GalleryPage() {
                   <div className="absolute inset-0 bg-dark/0 group-hover:bg-dark/40 transition-all duration-500 flex items-center justify-center">
                     <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 text-center">
                       <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center mx-auto mb-2">
-                        {item.media_type === "video" ? (
+                        {item.type === "video" ? (
                           <Play className="w-5 h-5 text-white" />
                         ) : (
                           <ImageIcon className="w-5 h-5 text-white" />
@@ -199,7 +199,7 @@ export default function GalleryPage() {
               className="w-[85vw] h-[80vh] max-w-4xl rounded-[var(--radius-xl)] overflow-hidden relative flex items-center justify-center bg-black/40"
               onClick={(e) => e.stopPropagation()}
             >
-              {filtered[lightboxIndex]?.media_type === "video" ? (
+              {filtered[lightboxIndex]?.type === "video" ? (
                 <video src={filtered[lightboxIndex]?.url} controls autoPlay loop className="w-full h-full object-contain" />
               ) : (
                 <img src={filtered[lightboxIndex]?.url} alt={filtered[lightboxIndex]?.caption} className="w-full h-full object-contain" />
