@@ -1,0 +1,412 @@
+"use client";
+
+import { useState, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { ShoppingBag, Printer, Volume2, Plus, Phone, User, Utensils, X, Check, Coffee } from "lucide-react";
+import { Order, OrderStatus } from "@/types/database";
+import { formatPrice } from "@/lib/utils";
+import { toast } from "sonner";
+
+const INITIAL_MOCK_ORDERS: Order[] = [
+  {
+    id: "ord-101",
+    customer_name: "Karim Benali",
+    customer_phone: "0550 12 34 56",
+    order_type: "click_and_collect",
+    pickup_time: "Dans 15 min",
+    status: "pending",
+    total_amount: 1850,
+    created_at: new Date(Date.now() - 1000 * 60 * 5).toISOString(),
+    updated_at: new Date(Date.now() - 1000 * 60 * 5).toISOString(),
+    items: [
+      { id: "i1", order_id: "ord-101", product_id: "p1", product_name: "Pistachio Latte", quantity: 2, unit_price: 650, total_price: 1300 },
+      { id: "i2", order_id: "ord-101", product_id: "p2", product_name: "Mojito Classic", quantity: 1, unit_price: 550, total_price: 550 },
+    ],
+  },
+  {
+    id: "ord-102",
+    customer_name: "Sarah Loucif",
+    customer_phone: "0661 98 76 54",
+    order_type: "dine_in",
+    table_number: 4,
+    status: "preparing",
+    total_amount: 1150,
+    created_at: new Date(Date.now() - 1000 * 60 * 15).toISOString(),
+    updated_at: new Date(Date.now() - 1000 * 60 * 15).toISOString(),
+    items: [
+      { id: "i3", order_id: "ord-102", product_id: "p3", product_name: "Signature Burger", quantity: 1, unit_price: 1150, total_price: 1150 },
+    ],
+  },
+];
+
+const STATUS_CONFIG: Record<OrderStatus, { label: string; color: string; bg: string }> = {
+  pending: { label: "En attente", color: "text-amber-600 dark:text-amber-400", bg: "bg-amber-500/10 border-amber-500/20" },
+  preparing: { label: "En préparation", color: "text-blue-600 dark:text-blue-400", bg: "bg-blue-500/10 border-blue-500/20" },
+  ready: { label: "Prêt à récupérer", color: "text-emerald-600 dark:text-emerald-400", bg: "bg-emerald-500/10 border-emerald-500/20" },
+  completed: { label: "Terminé", color: "text-muted dark:text-muted-dark", bg: "bg-gray-500/10 border-gray-500/20" },
+  cancelled: { label: "Annulé", color: "text-danger", bg: "bg-danger/10 border-danger/20" },
+};
+
+export default function AdminOrdersPage() {
+  const [orders, setOrders] = useState<Order[]>(INITIAL_MOCK_ORDERS);
+  const [filter, setFilter] = useState<OrderStatus | "all">("all");
+  const [printingOrder, setPrintingOrder] = useState<Order | null>(null);
+
+  // Web Audio Synthesizer for order chime
+  const playChime = () => {
+    try {
+      const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+
+      const playNote = (freq: number, startTime: number, duration: number) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(freq, startTime);
+        gain.gain.setValueAtTime(0.3, startTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(startTime);
+        osc.stop(startTime + duration);
+      };
+
+      const now = ctx.currentTime;
+      playNote(587.33, now, 0.2); // D5
+      playNote(880, now + 0.15, 0.4); // A5
+    } catch (e) {
+      console.log("Audio play prevented", e);
+    }
+  };
+
+  const simulateIncomingOrder = () => {
+    playChime();
+    const newOrd: Order = {
+      id: `ord-${Math.floor(100 + Math.random() * 900)}`,
+      customer_name: "Yassine Mansouri",
+      customer_phone: "0770 45 67 89",
+      order_type: "click_and_collect",
+      pickup_time: "Dans 20 min",
+      status: "pending",
+      total_amount: 1500,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      items: [
+        { id: `i-${Date.now()}`, order_id: "new", product_id: "p1", product_name: "Crêpe Nutella Banane", quantity: 1, unit_price: 650, total_price: 650 },
+        { id: `i-${Date.now()}-2`, order_id: "new", product_id: "p2", product_name: "Iced Caramel Macchiato", quantity: 1, unit_price: 500, total_price: 500 },
+        { id: `i-${Date.now()}-3`, order_id: "new", product_id: "p3", product_name: "Fresh Orange Juice", quantity: 1, unit_price: 350, total_price: 350 },
+      ],
+    };
+    setOrders((prev) => [newOrd, ...prev]);
+    toast.success("🔔 NOUVELLE COMMANDE REÇUE ! (#" + newOrd.id.slice(-4) + ")");
+  };
+
+  const updateOrderStatus = (orderId: string, newStatus: OrderStatus) => {
+    setOrders((prev) =>
+      prev.map((ord) => (ord.id === orderId ? { ...ord, status: newStatus } : ord))
+    );
+    toast.info(`Statut de la commande mis à jour`);
+  };
+
+  const handlePrint = (order: Order) => {
+    setPrintingOrder(order);
+    setTimeout(() => {
+      window.print();
+    }, 300);
+  };
+
+  const filteredOrders = filter === "all" ? orders : orders.filter((o) => o.status === filter);
+
+  return (
+    <div className="p-6 md:p-10 space-y-8">
+      {/* Printable Thermal Receipt Modal Container (Visible only during window.print) */}
+      {printingOrder && (
+        <div className="hidden print:block fixed inset-0 bg-white text-black p-4 font-mono text-xs w-[80mm] mx-auto leading-tight">
+          <div className="text-center pb-2 border-b border-black">
+            <h2 className="font-bold text-base uppercase">AFNENE COFFEE</h2>
+            <p className="text-[10px]">Drink • Food • Desserts</p>
+            <p className="text-[9px] mt-1">Tél: 0550 00 00 00</p>
+          </div>
+
+          <div className="py-2 border-b border-black space-y-1">
+            <p><strong>N° Commande :</strong> #{printingOrder.id}</p>
+            <p><strong>Date :</strong> {new Date(printingOrder.created_at).toLocaleString()}</p>
+            <p><strong>Client :</strong> {printingOrder.customer_name}</p>
+            <p><strong>Tél :</strong> {printingOrder.customer_phone}</p>
+            <p><strong>Type :</strong> {printingOrder.order_type === "click_and_collect" ? `Click & Collect (${printingOrder.pickup_time})` : `Sur Place - Table ${printingOrder.table_number || 1}`}</p>
+          </div>
+
+          <table className="w-full my-2 text-left border-b border-black pb-2">
+            <thead>
+              <tr className="border-b border-black">
+                <th className="py-1">Qté</th>
+                <th className="py-1">Article</th>
+                <th className="py-1 text-right">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              {printingOrder.items?.map((item) => (
+                <tr key={item.id}>
+                  <td className="py-1 align-top font-bold">{item.quantity}x</td>
+                  <td className="py-1 align-top">{item.product_name}</td>
+                  <td className="py-1 text-right align-top">{item.total_price} DA</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+
+          <div className="text-right text-sm font-bold pt-1">
+            TOTAL : {printingOrder.total_amount} DA
+          </div>
+
+          <div className="text-center pt-4 mt-4 border-t border-dashed border-black text-[10px]">
+            <p>Merci pour votre visite !</p>
+            <p>À bientôt chez AFNENE Coffee ☕</p>
+          </div>
+        </div>
+      )}
+
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 print:hidden">
+        <div>
+          <h1 className="text-2xl md:text-3xl font-bold text-dark dark:text-white" style={{ fontFamily: "var(--font-heading)" }}>
+            Gestion des Commandes (KDS) 🔔
+          </h1>
+          <p className="text-sm text-muted dark:text-muted-dark mt-1">
+            Suivez les commandes en direct avec signal sonore et impression ticket.
+          </p>
+        </div>
+
+        {/* Action Controls */}
+        <div className="flex items-center gap-3">
+          <button
+            onClick={playChime}
+            className="px-3.5 py-2 rounded-xl bg-card dark:bg-card-dark border border-border/60 text-xs font-semibold flex items-center gap-1.5 hover:bg-primary/5 transition-colors"
+            title="Tester le son de notification"
+          >
+            <Volume2 className="w-4 h-4 text-secondary" />
+            <span>Tester Son 🔔</span>
+          </button>
+
+          <button
+            onClick={simulateIncomingOrder}
+            className="btn-primary text-xs px-4 py-2 flex items-center gap-1.5 shadow-md"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Simuler Commande 📥</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Filter Buttons */}
+      <div className="flex flex-wrap items-center gap-2 print:hidden">
+        {(["all", "pending", "preparing", "ready", "completed"] as const).map((st) => (
+          <button
+            key={st}
+            onClick={() => setFilter(st)}
+            className={`px-4 py-2 rounded-xl text-xs font-semibold capitalize transition-all ${
+              filter === st
+                ? "bg-primary text-white shadow-md shadow-primary/20"
+                : "bg-card dark:bg-card-dark text-muted hover:text-dark dark:hover:text-white border border-border/40"
+            }`}
+          >
+            {st === "all" ? "Toutes les commandes" : STATUS_CONFIG[st].label}
+          </button>
+        ))}
+      </div>
+
+      {/* Orders Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 print:hidden">
+        {filteredOrders.length === 0 ? (
+          <div className="col-span-full py-16 text-center text-muted bg-card dark:bg-card-dark rounded-3xl border border-border/40">
+            <ShoppingBag className="w-12 h-12 mx-auto mb-3 opacity-30" />
+            <p className="font-semibold">Aucune commande pour le moment</p>
+          </div>
+        ) : (
+          filteredOrders.map((order) => {
+            const statusCfg = STATUS_CONFIG[order.status];
+
+            return (
+              <motion.div
+                key={order.id}
+                layout
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-card dark:bg-card-dark rounded-3xl p-6 shadow-sm border border-border/60 dark:border-border-dark/60 flex flex-col justify-between space-y-4 hover:shadow-md transition-shadow"
+              >
+                {/* Order Header */}
+                <div>
+                  <div className="flex items-center justify-between gap-2 mb-3">
+                    <span className={`px-3 py-1 rounded-full text-xs font-bold border ${statusCfg.bg} ${statusCfg.color}`}>
+                      {statusCfg.label}
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => handlePrint(order)}
+                        className="p-1.5 rounded-lg bg-primary/10 hover:bg-primary hover:text-white text-primary transition-colors"
+                        title="Imprimer le ticket de caisse"
+                      >
+                        <Printer className="w-4 h-4" />
+                      </button>
+                      <span className="text-xs text-muted font-mono bg-black/5 dark:bg-white/5 px-2 py-0.5 rounded">
+                        #{order.id.slice(-4)}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <div className="flex items-center gap-2 text-dark dark:text-white font-bold text-base">
+                      <User className="w-4 h-4 text-primary shrink-0" />
+                      <span>{order.customer_name}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-muted text-xs">
+                      <Phone className="w-3.5 h-3.5" />
+                      <span>{order.customer_phone}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-xs font-semibold text-secondary pt-1">
+                      {order.order_type === "click_and_collect" ? (
+                        <>
+                          <ShoppingBag className="w-3.5 h-3.5" />
+                          <span>Click & Collect ({order.pickup_time})</span>
+                        </>
+                      ) : (
+                        <>
+                          <Utensils className="w-3.5 h-3.5" />
+                          <span>Sur place - Table {order.table_number || 1}</span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Order Items */}
+                <div className="py-3 border-y border-border/40 dark:border-border-dark/40 space-y-2">
+                  {order.items?.map((item) => (
+                    <div key={item.id} className="flex justify-between items-center text-xs">
+                      <span className="text-dark dark:text-white font-medium">
+                        <strong className="text-primary mr-1.5">{item.quantity}x</strong>
+                        {item.product_name}
+                      </span>
+                      <span className="text-muted font-semibold">{item.total_price} DA</span>
+                    </div>
+                  ))}
+                  <div className="flex justify-between items-center text-sm font-bold text-dark dark:text-white pt-2">
+                    <span>Total</span>
+                    <span className="text-primary dark:text-secondary">{formatPrice(order.total_amount)}</span>
+                  </div>
+                </div>
+
+                {/* Status Actions */}
+                <div className="flex items-center gap-2 pt-1">
+                  {order.status === "pending" && (
+                    <button
+                      onClick={() => updateOrderStatus(order.id, "preparing")}
+                      className="flex-1 py-2.5 px-3 rounded-xl bg-blue-600 text-white font-semibold text-xs hover:bg-blue-700 transition-colors shadow"
+                    >
+                      Lancer la préparation
+                    </button>
+                  )}
+                  {order.status === "preparing" && (
+                    <button
+                      onClick={() => updateOrderStatus(order.id, "ready")}
+                      className="flex-1 py-2.5 px-3 rounded-xl bg-emerald-600 text-white font-semibold text-xs hover:bg-emerald-700 transition-colors shadow"
+                    >
+                      Marquer Prêt
+                    </button>
+                  )}
+                  {order.status === "ready" && (
+                    <button
+                      onClick={() => updateOrderStatus(order.id, "completed")}
+                      className="flex-1 py-2.5 px-3 rounded-xl bg-primary text-white font-semibold text-xs hover:bg-primary-light transition-colors shadow"
+                    >
+                      Terminer la commande
+                    </button>
+                  )}
+                  {order.status !== "completed" && order.status !== "cancelled" && (
+                    <button
+                      onClick={() => updateOrderStatus(order.id, "cancelled")}
+                      className="py-2.5 px-3 rounded-xl bg-danger/10 text-danger hover:bg-danger/20 transition-colors font-semibold text-xs"
+                    >
+                      Annuler
+                    </button>
+                  )}
+                </div>
+              </motion.div>
+            );
+          })
+        )}
+      </div>
+
+      {/* Modal Preview for Print Ticket (Screen version) */}
+      <AnimatePresence>
+        {printingOrder && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 print:hidden">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+              onClick={() => setPrintingOrder(null)}
+            />
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="relative w-full max-w-sm bg-white text-black p-6 rounded-2xl shadow-2xl z-10 space-y-4 font-mono text-xs"
+            >
+              <div className="flex items-center justify-between pb-2 border-b border-black/20">
+                <span className="font-bold text-dark flex items-center gap-1.5">
+                  <Printer className="w-4 h-4 text-primary" /> Impression Ticket
+                </span>
+                <button onClick={() => setPrintingOrder(null)} className="text-black/60 hover:text-black">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Ticket Preview */}
+              <div className="p-4 bg-gray-50 rounded-xl border border-dashed border-gray-300 space-y-3">
+                <div className="text-center pb-2 border-b border-black">
+                  <h3 className="font-bold text-base">AFNENE COFFEE</h3>
+                  <p className="text-[10px]">Drink • Food • Desserts</p>
+                </div>
+                <div>
+                  <p>N° Commande : #{printingOrder.id}</p>
+                  <p>Client : {printingOrder.customer_name}</p>
+                  <p>Tél : {printingOrder.customer_phone}</p>
+                </div>
+                <div className="border-t border-black pt-2 space-y-1">
+                  {printingOrder.items?.map((it) => (
+                    <div key={it.id} className="flex justify-between">
+                      <span>{it.quantity}x {it.product_name}</span>
+                      <span>{it.total_price} DA</span>
+                    </div>
+                  ))}
+                </div>
+                <div className="text-right font-bold text-sm border-t border-black pt-2">
+                  Total : {printingOrder.total_amount} DA
+                </div>
+              </div>
+
+              <div className="flex gap-2 pt-2">
+                <button
+                  onClick={() => setPrintingOrder(null)}
+                  className="flex-1 py-2.5 rounded-xl border border-gray-300 text-xs font-semibold text-gray-700"
+                >
+                  Fermer
+                </button>
+                <button
+                  onClick={() => window.print()}
+                  className="flex-1 py-2.5 rounded-xl bg-primary text-white text-xs font-bold hover:bg-primary-light flex items-center justify-center gap-1.5 shadow"
+                >
+                  <Printer className="w-4 h-4" />
+                  Lancer l&apos;impression
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}

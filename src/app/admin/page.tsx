@@ -1,0 +1,238 @@
+"use client";
+
+import { motion } from "framer-motion";
+import {
+  Package,
+  FolderOpen,
+  Tag,
+  Users,
+  TrendingUp,
+  Eye,
+  Plus,
+  ArrowUpRight,
+} from "lucide-react";
+import Link from "next/link";
+
+const STATS = [
+  {
+    label: "Total Products",
+    value: "18",
+    change: "+3 this week",
+    icon: Package,
+    color: "bg-primary/10 text-primary dark:text-secondary",
+    href: "/admin/products",
+  },
+  {
+    label: "Categories",
+    value: "9",
+    change: "All active",
+    icon: FolderOpen,
+    color: "bg-secondary/10 text-secondary",
+    href: "/admin/categories",
+  },
+  {
+    label: "Active Promotions",
+    value: "4",
+    change: "2 ending soon",
+    icon: Tag,
+    color: "bg-accent/10 text-accent",
+    href: "/admin/promotions",
+  },
+  {
+    label: "Today's Visitors",
+    value: "127",
+    change: "+12% vs yesterday",
+    icon: Users,
+    color: "bg-green-500/10 text-green-600 dark:text-green-400",
+    href: "/admin",
+  },
+];
+
+const RECENT_PRODUCTS = [
+  { name: "Signature Espresso", category: "Coffee", price: "250 DA", status: "Available" },
+  { name: "Classic Burger", category: "Burgers", price: "850 DA", status: "Available" },
+  { name: "Iced Caramel Latte", category: "Cold Drinks", price: "500 DA", status: "Available" },
+  { name: "Tiramisu", category: "Desserts", price: "600 DA", status: "Available" },
+  { name: "Chicken Nuggets", category: "Snacks", price: "450 DA", status: "Unavailable" },
+];
+
+const QUICK_ACTIONS = [
+  { label: "Add Product", href: "/admin/products/new", icon: Package },
+  { label: "New Promotion", href: "/admin/promotions", icon: Tag },
+  { label: "Upload Gallery", href: "/admin/gallery", icon: Eye },
+];
+
+export default function AdminDashboardPage() {
+  return (
+    <div className="p-6 lg:p-8 max-w-7xl">
+      {/* Header */}
+      <div className="mb-8">
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+        >
+          <h1
+            className="text-2xl lg:text-3xl font-bold text-dark dark:text-white mb-1"
+            style={{ fontFamily: "var(--font-heading)" }}
+          >
+            Dashboard
+          </h1>
+          <p className="text-muted dark:text-muted-dark text-sm">
+            Welcome back! Here&apos;s what&apos;s happening with your coffee shop.
+          </p>
+        </motion.div>
+      </div>
+
+      {/* Stats Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        {STATS.map((stat, index) => (
+          <motion.div
+            key={stat.label}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: index * 0.08, duration: 0.4 }}
+          >
+            <Link
+              href={stat.href}
+              className="block glass-card rounded-[var(--radius-lg)] p-5 group hover:shadow-[var(--shadow-card-hover)] transition-all duration-300"
+            >
+              <div className="flex items-start justify-between mb-3">
+                <div className={`w-10 h-10 rounded-xl ${stat.color} flex items-center justify-center`}>
+                  <stat.icon className="w-5 h-5" />
+                </div>
+                <ArrowUpRight className="w-4 h-4 text-muted dark:text-muted-dark opacity-0 group-hover:opacity-100 transition-opacity" />
+              </div>
+              <p
+                className="text-2xl font-bold text-dark dark:text-white mb-0.5"
+                style={{ fontFamily: "var(--font-heading)" }}
+              >
+                {stat.value}
+              </p>
+              <p className="text-sm text-muted dark:text-muted-dark">{stat.label}</p>
+              <div className="flex items-center gap-1 mt-2">
+                <TrendingUp className="w-3 h-3 text-green-500" />
+                <span className="text-xs text-green-600 dark:text-green-400">{stat.change}</span>
+              </div>
+            </Link>
+          </motion.div>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Recent Products */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.35, duration: 0.4 }}
+          className="lg:col-span-2 glass-card rounded-[var(--radius-lg)] p-6"
+        >
+          <div className="flex items-center justify-between mb-5">
+            <h2 className="font-bold text-dark dark:text-white"
+                style={{ fontFamily: "var(--font-heading)" }}>
+              Recent Products
+            </h2>
+            <Link
+              href="/admin/products"
+              className="text-xs text-primary dark:text-secondary font-semibold hover:underline"
+            >
+              View All
+            </Link>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border dark:border-border-dark">
+                  <th className="text-left py-2.5 font-semibold text-muted dark:text-muted-dark text-xs uppercase tracking-wider">
+                    Product
+                  </th>
+                  <th className="text-left py-2.5 font-semibold text-muted dark:text-muted-dark text-xs uppercase tracking-wider">
+                    Category
+                  </th>
+                  <th className="text-left py-2.5 font-semibold text-muted dark:text-muted-dark text-xs uppercase tracking-wider">
+                    Price
+                  </th>
+                  <th className="text-left py-2.5 font-semibold text-muted dark:text-muted-dark text-xs uppercase tracking-wider">
+                    Status
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {RECENT_PRODUCTS.map((product) => (
+                  <tr
+                    key={product.name}
+                    className="border-b border-border/50 dark:border-border-dark/50 last:border-0"
+                  >
+                    <td className="py-3 font-medium text-dark dark:text-white">
+                      {product.name}
+                    </td>
+                    <td className="py-3 text-muted dark:text-muted-dark">
+                      {product.category}
+                    </td>
+                    <td className="py-3 font-semibold text-primary dark:text-secondary">
+                      {product.price}
+                    </td>
+                    <td className="py-3">
+                      <span
+                        className={
+                          product.status === "Available"
+                            ? "badge-available"
+                            : "badge-unavailable"
+                        }
+                      >
+                        {product.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </motion.div>
+
+        {/* Quick Actions */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.45, duration: 0.4 }}
+          className="glass-card rounded-[var(--radius-lg)] p-6"
+        >
+          <h2 className="font-bold text-dark dark:text-white mb-5"
+              style={{ fontFamily: "var(--font-heading)" }}>
+            Quick Actions
+          </h2>
+          <div className="space-y-3">
+            {QUICK_ACTIONS.map((action) => (
+              <Link
+                key={action.label}
+                href={action.href}
+                className="flex items-center gap-3 p-3 rounded-xl hover:bg-primary/5 dark:hover:bg-white/5 transition-colors group"
+              >
+                <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-all">
+                  <action.icon className="w-4 h-4 text-primary group-hover:text-white" />
+                </div>
+                <span className="text-sm font-medium text-dark dark:text-white">
+                  {action.label}
+                </span>
+                <Plus className="w-4 h-4 text-muted dark:text-muted-dark ml-auto" />
+              </Link>
+            ))}
+          </div>
+
+          {/* Visit Site */}
+          <div className="mt-6 pt-5 border-t border-border/50 dark:border-border-dark/50">
+            <Link
+              href="/"
+              target="_blank"
+              className="btn-gold w-full text-sm py-2.5"
+            >
+              <Eye className="w-4 h-4" />
+              View Live Site
+            </Link>
+          </div>
+        </motion.div>
+      </div>
+    </div>
+  );
+}
