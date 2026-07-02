@@ -34,9 +34,15 @@ export default function AdminLayout({
   }
 
   return (
-    <div className="flex min-h-screen bg-background dark:bg-background-dark">
+    <div className="flex min-h-screen bg-background dark:bg-background-dark relative overflow-hidden">
+      {/* Subtle Background Logo Watermark */}
+      <div 
+        className="fixed -bottom-24 -right-24 w-[500px] h-[500px] rounded-full opacity-[0.04] dark:opacity-[0.02] pointer-events-none bg-no-repeat bg-contain bg-center z-0"
+        style={{ backgroundImage: "url('/logo.jpg')" }}
+      />
+      
       <AdminSidebar />
-      <main className="flex-1 lg:overflow-y-auto">
+      <main className="flex-1 lg:overflow-y-auto z-10 relative">
         <div className="pt-14 lg:pt-0">{children}</div>
       </main>
     </div>

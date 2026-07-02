@@ -164,6 +164,20 @@ export default function AdminQRCodesPage() {
                 </button>
               </div>
 
+              {/* Domain Input Override */}
+              <div className="mb-6 max-w-xs mx-auto text-left">
+                <label className="block text-[11px] font-bold text-muted mb-1.5 uppercase tracking-wider">
+                  Adresse du Site (Domaine)
+                </label>
+                <input
+                  type="text"
+                  value={origin}
+                  onChange={(e) => setOrigin(e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-xl border border-border dark:border-border-dark bg-background dark:bg-white/5 text-dark dark:text-white text-xs focus:outline-none focus:border-primary font-mono"
+                  placeholder="https://votre-site.vercel.app"
+                />
+              </div>
+
               {qrType === "table" && (
                 <div className="mb-6 max-w-xs mx-auto">
                   <label className="block text-[11px] font-semibold text-muted mb-1.5 text-left uppercase tracking-wider">
