@@ -90,7 +90,12 @@ export function MenuOfTheDay() {
                  className="w-full max-w-[280px] aspect-square md:max-w-[350px] lg:max-w-[400px] rounded-[32px] overflow-hidden shadow-2xl border-4 border-white"
                >
                  <MediaRenderer 
-                   url={menu.imageUrl} 
+                   mediaType={
+                     menu.imageUrl.endsWith(".mp4") || menu.imageUrl.endsWith(".webm") || menu.imageUrl.includes("video") || menu.imageUrl.includes("mp4")
+                       ? "video"
+                       : "image"
+                   }
+                   mediaUrl={menu.imageUrl} 
                    alt={menu.dishName} 
                    className="w-full h-full object-cover"
                  />

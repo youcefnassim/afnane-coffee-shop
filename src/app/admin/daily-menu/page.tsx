@@ -208,7 +208,12 @@ export default function AdminDailyMenuPage() {
           <div className="relative bg-[#F0EDE1] rounded-[28px] p-6 flex flex-col items-center text-center shadow-md border border-black/5 overflow-hidden">
             <div className="w-44 h-44 rounded-full overflow-hidden shadow-xl border-4 border-white mb-4">
               <MediaRenderer
-                url={imageUrl || "https://images.unsplash.com/photo-1598514982205-f36b96d1e8d4?q=80&w=800&auto=format&fit=crop"}
+                mediaType={
+                  selectedFile
+                    ? (selectedFile.type.startsWith("video") ? "video" : "image")
+                    : (imageUrl.endsWith(".mp4") || imageUrl.endsWith(".webm") || imageUrl.includes("video") || imageUrl.includes("mp4") ? "video" : "image")
+                }
+                mediaUrl={imageUrl || "https://images.unsplash.com/photo-1598514982205-f36b96d1e8d4?q=80&w=800&auto=format&fit=crop"}
                 alt="Preview"
                 className="w-full h-full object-cover"
               />
