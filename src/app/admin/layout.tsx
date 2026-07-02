@@ -37,7 +37,7 @@ export default function AdminLayout({
     <div className="flex min-h-screen bg-background dark:bg-background-dark relative overflow-hidden">
       {/* Subtle Background Logo Watermark */}
       <div 
-        className="fixed -bottom-24 -right-24 w-[500px] h-[500px] rounded-full opacity-[0.04] dark:opacity-[0.02] pointer-events-none bg-no-repeat bg-contain bg-center z-0"
+        className="fixed -bottom-24 -right-24 w-[500px] h-[500px] rounded-full opacity-[0.1] dark:opacity-[0.04] pointer-events-none bg-no-repeat bg-contain bg-center z-0"
         style={{ backgroundImage: "url('/logo.jpg')" }}
       />
       
