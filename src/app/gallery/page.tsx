@@ -111,12 +111,12 @@ export default function GalleryPage() {
               className="columns-1 sm:columns-2 lg:columns-3 gap-4 space-y-4"
             >
               {filtered.map((item, index) => (
-                <motion.div
+                 <motion.div
                   key={item.id}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.05, duration: 0.4 }}
-                  className={`break-inside-avoid ${MASONRY_HEIGHTS[index % MASONRY_HEIGHTS.length]} rounded-[var(--radius-lg)] overflow-hidden relative group cursor-pointer bg-gradient-to-br ${item.color}`}
+                  className={`break-inside-avoid ${MASONRY_HEIGHTS[index % MASONRY_HEIGHTS.length]} rounded-[var(--radius-lg)] overflow-hidden relative group cursor-pointer bg-gradient-to-br ${item.color || "from-primary/10 to-secondary/10"}`}
                   onClick={() => openLightbox(index)}
                 >
                   {/* Real Content */}
@@ -137,17 +137,17 @@ export default function GalleryPage() {
                     />
                   )}
 
-                  {/* Hover Overlay */}
-                  <div className="absolute inset-0 bg-dark/0 group-hover:bg-dark/40 transition-all duration-500 flex items-center justify-center">
-                    <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 text-center">
-                      <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center mx-auto mb-2">
+                  {/* Overlay / Play Button for Mobile and Desktop Hover */}
+                  <div className="absolute inset-0 bg-black/25 md:bg-dark/0 md:group-hover:bg-dark/40 transition-all duration-500 flex items-center justify-center">
+                    <div className="opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-300 text-center">
+                      <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center mx-auto mb-1.5 shadow-lg">
                         {item.type === "video" ? (
-                          <Play className="w-5 h-5 text-white" />
+                          <Play className="w-5 h-5 text-white fill-white ml-0.5" />
                         ) : (
                           <ImageIcon className="w-5 h-5 text-white" />
                         )}
                       </div>
-                      <p className="text-white text-sm font-medium">{item.caption}</p>
+                      <p className="text-white text-xs font-semibold px-2 truncate max-w-[150px]">{item.caption}</p>
                     </div>
                   </div>
                 </motion.div>
