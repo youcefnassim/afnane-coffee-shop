@@ -10,6 +10,8 @@ import { formatPrice, cn } from "@/lib/utils";
 import { useLanguageStore } from "@/store/useLanguageStore";
 import { translations } from "@/lib/translations";
 
+import { MediaRenderer } from "@/components/shared/MediaRenderer";
+
 export function MenuOfTheDay() {
   const { menu } = useDailyMenuStore();
   const { language } = useLanguageStore();
@@ -50,7 +52,7 @@ export function MenuOfTheDay() {
                   {t.dailyMenu.badge}
                 </h3>
                 <svg viewBox="0 0 24 24" className="w-4 h-4 text-primary" fill="currentColor">
-                    <path d="M17.6,4.2C16,2.7,13.7,2.1,11.5,2.6c-2.3,0.5-4.2,2.1-5.3,4.2C5.1,9.2,4.8,12,5.7,14.5c-1.3,1.3-2.6,2.7-3.9,4 c-0.6,0.6-0.6,1.5,0,2.1c0.6,0.6,1.5,0.6,2.1,0c1.3-1.3,2.7-2.6,4-3.9c2.4,0.9,5.2,0.6,7.7-0.5c2.1-1,3.7-2.9,4.2-5.3 C20.3,8.7,19.6,6.3,17.6,4.2z M17,10.6c-0.4,1.8-1.6,3.2-3.2,3.9c-1.7,0.8-3.7,0.7-5.3-0.2c-0.3-0.2-0.7-0.1-0.9,0.2 C7.5,14.6,7.6,15,7.9,15.2c1.9,1.1,4.4,1.3,6.5,0.3c2-0.9,3.5-2.7,4-4.9c0.5-2.2,0-4.6-1.5-6.3c-1.5-1.7-3.8-2.3-6-1.8 c-0.4,0.1-0.6,0.5-0.5,0.9c0.1,0.4,0.5,0.6,0.9,0.5c1.8-0.4,3.6,0,4.8,1.3C17.3,6.7,17.6,8.6,17,10.6z"/>
+                    <path d="M17.6,4.2C16,2.7,13.7,2.1,11.5,2.6c-2.3,0.5-4.2,2.1-5.3,4.2C5.1,9.2,4.8,12,5.7,14.5c-1.3,1.3-2.6,2.7-3.9,4 c-0.6,0.6-0.6,1.5,0,2.1c0.6,0.6,1.5,0.6,2.1,0c1.3-1.3,2.7-2.6,4-3.9c2.4,0.9,5.2,0.6,7.7-0.5c2.1-1,3.7-2.9,4.2-5.3 C20.3,8.7,19.6,6.3,17.6,4.2z M17,10.6c-0.4,1.8-1.6,3.2-3.9c-1.7,0.8-3.7,0.7-5.3-0.2c-0.3-0.2-0.7-0.1-0.9,0.2 C7.5,14.6,7.6,15,7.9,15.2c1.9,1.1,4.4,1.3,6.5,0.3c2-0.9,3.5-2.7,4-4.9c0.5-2.2,0-4.6-1.5-6.3c-1.5-1.7-3.8-2.3-6-1.8 c-0.4,0.1-0.6,0.5-0.5,0.9c0.1,0.4,0.5,0.6,0.9,0.5c1.8-0.4,3.6,0,4.8,1.3C17.3,6.7,17.6,8.6,17,10.6z"/>
                 </svg>
               </div>
 
@@ -87,8 +89,8 @@ export function MenuOfTheDay() {
                  transition={{ duration: 0.8, type: "spring" }}
                  className="w-full max-w-[280px] aspect-square md:max-w-[350px] lg:max-w-[400px] rounded-[32px] overflow-hidden shadow-2xl border-4 border-white"
                >
-                 <img 
-                   src={menu.imageUrl} 
+                 <MediaRenderer 
+                   url={menu.imageUrl} 
                    alt={menu.dishName} 
                    className="w-full h-full object-cover"
                  />

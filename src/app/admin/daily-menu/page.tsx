@@ -6,6 +6,7 @@ import { CalendarDays, Save, Upload, Sparkles } from "lucide-react";
 import { formatPrice } from "@/lib/utils";
 import { toast } from "sonner";
 import { useDailyMenuStore } from "@/store/useDailyMenuStore";
+import { MediaRenderer } from "@/components/shared/MediaRenderer";
 
 export default function AdminDailyMenuPage() {
   const { menu, updateDailyMenu } = useDailyMenuStore();
@@ -166,7 +167,7 @@ export default function AdminDailyMenuPage() {
               <input
                 type="file"
                 id="daily-menu-upload"
-                accept="image/*"
+                accept="video/*,image/*"
                 className="hidden"
                 onChange={handleFileUpload}
               />
@@ -206,8 +207,8 @@ export default function AdminDailyMenuPage() {
 
           <div className="relative bg-[#F0EDE1] rounded-[28px] p-6 flex flex-col items-center text-center shadow-md border border-black/5 overflow-hidden">
             <div className="w-44 h-44 rounded-full overflow-hidden shadow-xl border-4 border-white mb-4">
-              <img
-                src={imageUrl || "https://images.unsplash.com/photo-1598514982205-f36b96d1e8d4?q=80&w=800&auto=format&fit=crop"}
+              <MediaRenderer
+                url={imageUrl || "https://images.unsplash.com/photo-1598514982205-f36b96d1e8d4?q=80&w=800&auto=format&fit=crop"}
                 alt="Preview"
                 className="w-full h-full object-cover"
               />
