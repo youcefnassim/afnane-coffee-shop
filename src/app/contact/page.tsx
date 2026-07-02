@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import {
   Phone,
@@ -10,6 +10,7 @@ import {
   Mail,
   ExternalLink,
 } from "lucide-react";
+import { useSettingsStore } from "@/store/useSettingsStore";
 
 function InstagramIcon({ className }: { className?: string }) {
   return (
@@ -18,58 +19,65 @@ function InstagramIcon({ className }: { className?: string }) {
     </svg>
   );
 }
+
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { AnimationWrapper, StaggerContainer, StaggerItem } from "@/components/shared/AnimationWrapper";
 
-const OPENING_HOURS = [
-  { day: "Lundi", hours: "07h00 - 22h00" },
-  { day: "Mardi", hours: "07h00 - 22h00" },
-  { day: "Mercredi", hours: "07h00 - 22h00" },
-  { day: "Jeudi", hours: "07h00 - 22h00" },
-  { day: "Vendredi", hours: "07h00 - 22h00" },
-  { day: "Samedi", hours: "07h00 - 22h00" },
-  { day: "Dimanche", hours: "07h00 - 22h00" },
-];
-
-const CONTACT_INFO = [
-  {
-    icon: Phone,
-    title: "Téléphone",
-    value: "+213 554 78 50 79",
-    href: "tel:+213554785079",
-    action: "Appeler",
-    color: "bg-primary/10 text-primary dark:bg-primary/20 dark:text-secondary",
-  },
-  {
-    icon: MessageCircle,
-    title: "WhatsApp",
-    value: "+213 554 78 50 79",
-    href: "https://wa.me/213554785079",
-    action: "Discuter",
-    color: "bg-green-500/10 text-green-600 dark:bg-green-500/20 dark:text-green-400",
-  },
-  {
-    icon: InstagramIcon,
-    title: "Instagram",
-    value: "@afnene.snackcoffee",
-    href: "https://www.instagram.com/afnene.snackcoffee?igsh=ajN5YmcyMXU0YXNh",
-    action: "Suivre",
-    color: "bg-pink-500/10 text-pink-600 dark:bg-pink-500/20 dark:text-pink-400",
-  },
-  {
-    icon: Mail,
-    title: "Email",
-    value: "hello@afnene.com",
-    href: "mailto:hello@afnene.com",
-    action: "Envoyer un email",
-    color: "bg-blue-500/10 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400",
-  },
-];
-
 export default function ContactPage() {
+  const { settings, fetchSettings } = useSettingsStore();
   const [showMap, setShowMap] = useState(false);
-  const today = new Date().toLocaleDateString("en-US", { weekday: "long" });
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    fetchSettings();
+  }, [fetchSettings]);
+
+  if (!mounted) return null;
+
+  const today = new Date().toLocaleDateString("fr-FR", { weekday: "long" });
+
+  const cleanWhatsapp = (settings?.whatsapp || "213554785079")
+    .replace(/\+/g, "")
+    .replace(/\s/g, "");
+
+  const CONTACT_INFO = [
+    {
+      icon: Phone,
+      title: "Téléphone",
+      value: settings?.phone || "+213 554 78 50 79",
+      href: `tel:${(settings?.phone || "+213554785079").replace(/\s/g, "")}`,
+      action: "Appeler",
+      color: "bg-primary/10 text-primary dark:bg-primary/20 dark:text-secondary",
+    },
+    {
+      icon: MessageCircle,
+      title: "WhatsApp",
+      value: settings?.phone || "+213 554 78 50 79",
+      href: `https://wa.me/${cleanWhatsapp}`,
+      action: "Discuter",
+      color: "bg-green-500/10 text-green-600 dark:bg-green-500/20 dark:text-green-400",
+    },
+    {
+      icon: InstagramIcon,
+      title: "Instagram",
+      value: settings?.instagram || "@afnene.snackcoffee",
+      href: settings?.instagram
+        ? `https://www.instagram.com/${settings.instagram.replace("@", "")}`
+        : "https://www.instagram.com/afnene.snackcoffee",
+      action: "Suivre",
+      color: "bg-pink-500/10 text-pink-600 dark:bg-pink-500/20 dark:text-pink-400",
+    },
+    {
+      icon: Mail,
+      title: "Email",
+      value: settings?.email || "hello@afnene.com",
+      href: `mailto:${settings?.email || "hello@afnene.com"}`,
+      action: "Envoyer un email",
+      color: "bg-blue-500/10 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400",
+    },
+  ];
 
   return (
     <>
@@ -84,7 +92,7 @@ export default function ContactPage() {
               </span>
               <h1 className="section-heading">Contact Us</h1>
               <span className="heading-accent" />
-              <p className="section-subheading mt-6">
+              <p className="section-subheading mt-6 font-sans">
                 We&apos;d love to hear from you. Reach out anytime — whether for reservations, feedback, or just to say hello.
               </p>
             </div>
@@ -108,13 +116,13 @@ export default function ContactPage() {
                       <div className={`w-11 h-11 rounded-xl ${info.color} flex items-center justify-center mb-3`}>
                         <info.icon className="w-5 h-5" />
                       </div>
-                      <h3 className="font-semibold text-dark dark:text-white text-sm mb-1">
+                      <h3 className="font-semibold text-dark dark:text-white text-sm mb-1 font-sans">
                         {info.title}
                       </h3>
-                      <p className="text-muted dark:text-muted-dark text-sm mb-3">
+                      <p className="text-muted dark:text-muted-dark text-sm mb-3 font-sans truncate">
                         {info.value}
                       </p>
-                      <span className="text-xs font-semibold text-primary dark:text-secondary flex items-center gap-1 group-hover:gap-2 transition-all">
+                      <span className="text-xs font-semibold text-primary dark:text-secondary flex items-center gap-1 group-hover:gap-2 transition-all font-sans">
                         {info.action}
                         <ExternalLink className="w-3 h-3" />
                       </span>
@@ -139,32 +147,16 @@ export default function ContactPage() {
                   </div>
 
                   <div className="space-y-2.5">
-                    {OPENING_HOURS.map((schedule) => (
-                      <div
-                        key={schedule.day}
-                        className={`flex items-center justify-between py-2.5 px-3 rounded-xl text-sm transition-colors ${
-                          schedule.day === today
-                            ? "bg-primary/5 dark:bg-primary/10 font-semibold"
-                            : ""
-                        }`}
-                      >
-                        <span className={`${
-                          schedule.day === today
-                            ? "text-primary dark:text-secondary"
-                            : "text-dark/80 dark:text-white/80"
-                        }`}>
-                          {schedule.day}
-                          {schedule.day === today && (
-                            <span className="ml-2 text-[10px] px-2 py-0.5 rounded-full bg-primary/10 text-primary dark:bg-secondary/20 dark:text-secondary uppercase tracking-wider">
-                              Today
-                            </span>
-                          )}
+                    <div
+                      className="flex items-center justify-between py-2.5 px-3 rounded-xl text-sm bg-primary/5 dark:bg-primary/10 font-semibold"
+                    >
+                      <span className="text-primary dark:text-secondary font-sans">
+                        {settings?.opening_hours || "Tous les jours: 07h00 - 22h00"}
+                        <span className="ml-2 text-[10px] px-2 py-0.5 rounded-full bg-primary/10 text-primary dark:bg-secondary/20 dark:text-secondary uppercase tracking-wider font-sans">
+                          Aujourd'hui
                         </span>
-                        <span className="text-muted dark:text-muted-dark tabular-nums">
-                          {schedule.hours}
-                        </span>
-                      </div>
-                    ))}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </AnimationWrapper>
@@ -177,11 +169,11 @@ export default function ContactPage() {
                       <MapPin className="w-5 h-5 text-primary dark:text-secondary" />
                     </div>
                     <div>
-                      <h3 className="font-bold text-dark dark:text-white text-sm">
+                      <h3 className="font-bold text-dark dark:text-white text-sm font-sans">
                         Notre Adresse
                       </h3>
-                      <p className="text-muted dark:text-muted-dark text-sm">
-                        Afnen SNACK & COFFEE, Oran, Algérie
+                      <p className="text-muted dark:text-muted-dark text-sm font-sans">
+                        {settings?.address || "Afnen SNACK & COFFEE, Oran, Algérie"}
                       </p>
                     </div>
                   </div>
@@ -189,7 +181,7 @@ export default function ContactPage() {
                     href="https://maps.app.goo.gl/1H1j9aavHXJKMEWe7"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="btn-primary text-sm w-full py-2.5 flex items-center justify-center gap-1.5"
+                    className="btn-primary text-sm w-full py-2.5 flex items-center justify-center gap-1.5 font-sans"
                   >
                     <MapPin className="w-4 h-4" />
                     Obtenir l'itinéraire
@@ -204,7 +196,7 @@ export default function ContactPage() {
                 <div className="rounded-[var(--radius-xl)] overflow-hidden h-[400px] lg:h-[500px] border border-border/40 shadow-lg relative bg-black flex items-center justify-center">
                   {showMap ? (
                     <iframe
-                      src="https://maps.google.com/maps?q=35.7203394,-0.5774749&z=17&output=embed"
+                      src={settings?.map_embed || "https://maps.google.com/maps?q=35.7203394,-0.5774749&z=17&output=embed"}
                       className="w-full h-full border-none"
                       allowFullScreen
                       loading="lazy"
@@ -229,11 +221,11 @@ export default function ContactPage() {
                           />
                         </div>
                         <h4 className="font-bold text-lg text-white uppercase tracking-widest" style={{ fontFamily: "var(--font-heading)" }}>
-                          AFNENE SNACK & COFFEE
+                          {settings?.shop_name || "AFNENE"} SNACK & COFFEE
                         </h4>
                         <button
                           onClick={() => setShowMap(true)}
-                          className="px-6 py-3 rounded-xl bg-[#D6B370] hover:bg-[#D6B370]/95 text-dark font-bold text-xs uppercase tracking-wider transition-all shadow-lg hover:scale-105"
+                          className="px-6 py-3 rounded-xl bg-[#D6B370] hover:bg-[#D6B370]/95 text-dark font-bold text-xs uppercase tracking-wider transition-all shadow-lg hover:scale-105 font-sans"
                         >
                           Afficher la carte interactive
                         </button>
@@ -252,14 +244,14 @@ export default function ContactPage() {
                     >
                       Order via WhatsApp
                     </h3>
-                    <p className="text-white/80 text-sm mb-5 leading-relaxed">
+                    <p className="text-white/80 text-sm mb-5 leading-relaxed font-sans">
                       Send us your order directly on WhatsApp for quick service and delivery.
                     </p>
                     <a
-                      href="https://wa.me/213554785079?text=Bonjour%20AFNENE!%20Je%20souhaite%20passer%20une%20commande."
+                      href={`https://wa.me/${cleanWhatsapp}?text=Bonjour%20AFNENE!%20Je%20souhaite%20passer%20une%20commande.`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 px-6 py-3 rounded-[var(--radius-lg)] bg-white text-green-700 font-bold text-sm hover:bg-white/90 transition-colors"
+                      className="inline-flex items-center gap-2 px-6 py-3 rounded-[var(--radius-lg)] bg-white text-green-700 font-bold text-sm hover:bg-white/90 transition-colors font-sans"
                     >
                       <MessageCircle className="w-4 h-4" />
                       Commander maintenant

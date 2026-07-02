@@ -1,13 +1,20 @@
 "use client";
 
+import { useEffect } from "react";
 import { Leaf, Heart, Home, Clock } from "lucide-react";
 import { useLanguageStore } from "@/store/useLanguageStore";
+import { useSettingsStore } from "@/store/useSettingsStore";
 import { translations } from "@/lib/translations";
 
 export function Footer() {
   const currentYear = new Date().getFullYear();
   const { language } = useLanguageStore();
+  const { settings, fetchSettings } = useSettingsStore();
   const t = translations[language] || translations.fr;
+
+  useEffect(() => {
+    fetchSettings();
+  }, [fetchSettings]);
 
   return (
     <footer className="relative bg-primary text-white overflow-hidden">
@@ -51,7 +58,7 @@ export function Footer() {
       <div className="container-premium py-6">
         <div className="flex flex-col md:flex-row items-center justify-between gap-4">
           <p className="text-white/40 text-xs">
-            © {currentYear} AFNENE Coffee. {t.footer.rights}
+            © {currentYear} {settings?.shop_name || "AFNENE"}. {t.footer.rights}
           </p>
           <p className="text-white/30 text-xs">
             {t.footer.crafted}

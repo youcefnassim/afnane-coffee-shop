@@ -7,12 +7,14 @@ import { ArrowLeft, ShoppingBag, Clock, User, Phone, CheckCircle2, Utensils, Mes
 import Link from "next/link";
 import Image from "next/image";
 import { useCartStore } from "@/store/useCartStore";
+import { useSettingsStore } from "@/store/useSettingsStore";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { toast } from "sonner";
 
 export default function CheckoutPage() {
   const router = useRouter();
+  const { settings, fetchSettings } = useSettingsStore();
   const {
     items,
     getSubtotalPrice,
@@ -37,7 +39,23 @@ export default function CheckoutPage() {
 
   useEffect(() => {
     setMounted(true);
-  }, []);
+    fetchSettings();
+
+    // Check table query param or sessionStorage
+    const params = new URLSearchParams(window.location.search);
+    const tableParam = params.get("table");
+    if (tableParam) {
+      setOrderType("dine_in");
+      setTableNumber(tableParam);
+      sessionStorage.setItem("afnene_table", tableParam);
+    } else {
+      const cachedTable = sessionStorage.getItem("afnene_table");
+      if (cachedTable) {
+        setOrderType("dine_in");
+        setTableNumber(cachedTable);
+      }
+    }
+  }, [fetchSettings]);
 
   if (!mounted) return null;
 
@@ -84,7 +102,10 @@ export default function CheckoutPage() {
       `💰 *TOTAL : ${totalPrice} DA*`;
 
     const encodedMessage = encodeURIComponent(message);
-    const whatsappUrl = `https://wa.me/213554785079?text=${encodedMessage}`;
+    const cleanWhatsapp = (settings?.whatsapp || "213554785079")
+      .replace(/\+/g, "")
+      .replace(/\s/g, "");
+    const whatsappUrl = `https://wa.me/${cleanWhatsapp}?text=${encodedMessage}`;
 
     setTimeout(() => {
       setIsSubmitting(false);

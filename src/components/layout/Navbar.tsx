@@ -8,6 +8,7 @@ import { Menu, X, MessageCircle, ShoppingBag } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useCartStore } from "@/store/useCartStore";
 import { useLanguageStore } from "@/store/useLanguageStore";
+import { useSettingsStore } from "@/store/useSettingsStore";
 import { translations } from "@/lib/translations";
 
 const NAV_LINKS = [
@@ -25,13 +26,23 @@ export function Navbar() {
   const [langOpen, setLangOpen] = useState(false);
   const { openCart, getTotalCount } = useCartStore();
   const { language, setLanguage } = useLanguageStore();
+  const { settings, fetchSettings } = useSettingsStore();
   const [mounted, setMounted] = useState(false);
 
   const t = mounted ? (translations[language] || translations.fr) : translations.fr;
 
   useEffect(() => {
     setMounted(true);
-  }, []);
+    fetchSettings();
+    // Capture table query param globally
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const tableParam = params.get("table");
+      if (tableParam) {
+        sessionStorage.setItem("afnene_table", tableParam);
+      }
+    }
+  }, [fetchSettings]);
 
   const totalCount = mounted ? getTotalCount() : 0;
 
@@ -87,13 +98,13 @@ export function Navbar() {
               </div>
               <div className="flex flex-col">
                 <span
-                  className="text-xl font-bold tracking-widest text-white leading-tight"
+                  className="text-xl font-bold tracking-widest text-white leading-tight uppercase"
                   style={{ fontFamily: "var(--font-heading)" }}
                 >
-                  AFNENE
+                  {settings?.shop_name || "AFNENE"}
                 </span>
                 <span className="text-[9px] tracking-[0.2em] uppercase text-secondary">
-                  Coffee • Drink • Snack
+                  {settings?.tagline || "Coffee • Drink • Snack"}
                 </span>
               </div>
             </Link>

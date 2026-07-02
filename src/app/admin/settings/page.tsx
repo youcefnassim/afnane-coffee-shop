@@ -1,89 +1,101 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Save, Store, Phone, Clock, MapPin, Globe, Palette } from "lucide-react";
 import { toast } from "sonner";
+import { useSettingsStore, ShopSettings } from "@/store/useSettingsStore";
 
 export default function AdminSettingsPage() {
+  const { settings: storeSettings, fetchSettings, updateSettings } = useSettingsStore();
   const [isSaving, setIsSaving] = useState(false);
-  const [settings, setSettings] = useState({
-    shopName: "AFNENE",
-    tagline: "Coffee • Drink • Snack",
-    phone: "+213 554 78 50 79",
-    email: "hello@afnene.com",
-    address: "Afnen SNACK & COFFEE, Oran, Algérie",
-    whatsapp: "+213 554 78 50 79",
-    instagram: "@afnene.snackcoffee",
-    facebook: "afnene.coffee",
-    openingHours: "Tous les jours: 07h00 - 22h00",
-    mapEmbed: "https://maps.google.com/maps?q=35.7203394,-0.5774749&z=17&output=embed",
-    primaryColor: "#004B36",
-    secondaryColor: "#D6B370",
-    currency: "DZD",
-    language: "en",
-  });
+  const [localSettings, setLocalSettings] = useState<ShopSettings | null>(null);
 
-  const updateSetting = (key: string, value: string) => {
-    setSettings((prev) => ({ ...prev, [key]: value }));
+  useEffect(() => {
+    fetchSettings();
+  }, [fetchSettings]);
+
+  useEffect(() => {
+    if (storeSettings) {
+      setLocalSettings(storeSettings);
+    }
+  }, [storeSettings]);
+
+  const updateSetting = (key: keyof ShopSettings, value: string) => {
+    if (!localSettings) return;
+    setLocalSettings((prev) => prev ? { ...prev, [key]: value } : null);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
+    if (!localSettings) return;
     setIsSaving(true);
-    setTimeout(() => {
-      toast.success("Settings saved successfully!");
+    try {
+      await updateSettings(localSettings);
+      toast.success("Paramètres enregistrés avec succès !");
+    } catch (err: any) {
+      toast.error(err.message || "Erreur lors de l'enregistrement");
+    } finally {
       setIsSaving(false);
-    }, 1000);
+    }
   };
+
+  if (!localSettings) {
+    return (
+      <div className="min-h-[50vh] flex flex-col items-center justify-center text-muted">
+        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4" />
+        <p className="text-sm">Chargement des paramètres...</p>
+      </div>
+    );
+  }
 
   const sections = [
     {
-      title: "General",
+      title: "Général",
       icon: Store,
       fields: [
-        { key: "shopName", label: "Shop Name", type: "text" },
-        { key: "tagline", label: "Tagline", type: "text" },
-        { key: "currency", label: "Currency", type: "text" },
+        { key: "shop_name" as keyof ShopSettings, label: "Nom du commerce", type: "text" },
+        { key: "tagline" as keyof ShopSettings, label: "Slogan (Tagline)", type: "text" },
+        { key: "currency" as keyof ShopSettings, label: "Devise", type: "text" },
       ],
     },
     {
       title: "Contact",
       icon: Phone,
       fields: [
-        { key: "phone", label: "Phone", type: "tel" },
-        { key: "email", label: "Email", type: "email" },
-        { key: "whatsapp", label: "WhatsApp", type: "tel" },
+        { key: "phone" as keyof ShopSettings, label: "Téléphone de contact", type: "tel" },
+        { key: "email" as keyof ShopSettings, label: "Email de contact", type: "email" },
+        { key: "whatsapp" as keyof ShopSettings, label: "Numéro WhatsApp (Format: 213xxxxxxxx)", type: "tel" },
       ],
     },
     {
-      title: "Social Media",
+      title: "Réseaux Sociaux",
       icon: Globe,
       fields: [
-        { key: "instagram", label: "Instagram", type: "text" },
-        { key: "facebook", label: "Facebook", type: "text" },
+        { key: "instagram" as keyof ShopSettings, label: "Instagram (@compte)", type: "text" },
+        { key: "facebook" as keyof ShopSettings, label: "Facebook (page)", type: "text" },
       ],
     },
     {
-      title: "Location",
+      title: "Localisation",
       icon: MapPin,
       fields: [
-        { key: "address", label: "Address", type: "text" },
-        { key: "mapEmbed", label: "Google Maps Embed URL", type: "url" },
+        { key: "address" as keyof ShopSettings, label: "Adresse physique", type: "text" },
+        { key: "map_embed" as keyof ShopSettings, label: "Google Maps URL (Embed/Intégration)", type: "url" },
       ],
     },
     {
-      title: "Hours",
+      title: "Horaires",
       icon: Clock,
       fields: [
-        { key: "openingHours", label: "Opening Hours", type: "text" },
+        { key: "opening_hours" as keyof ShopSettings, label: "Horaires d'ouverture", type: "text" },
       ],
     },
     {
-      title: "Theme",
+      title: "Thème",
       icon: Palette,
       fields: [
-        { key: "primaryColor", label: "Primary Color", type: "color" },
-        { key: "secondaryColor", label: "Secondary Color", type: "color" },
+        { key: "primary_color" as keyof ShopSettings, label: "Couleur principale (Hex)", type: "color" },
+        { key: "secondary_color" as keyof ShopSettings, label: "Couleur secondaire (Hex)", type: "color" },
       ],
     },
   ];
@@ -101,10 +113,10 @@ export default function AdminSettingsPage() {
             className="text-2xl font-bold text-dark dark:text-white"
             style={{ fontFamily: "var(--font-heading)" }}
           >
-            Settings
+            Paramètres
           </h1>
           <p className="text-muted dark:text-muted-dark text-sm mt-1">
-            Configure your coffee shop details
+            Configurez les détails et coordonnées de votre commerce
           </p>
         </div>
         <button
@@ -115,12 +127,12 @@ export default function AdminSettingsPage() {
           {isSaving ? (
             <div className="flex items-center gap-2">
               <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-              Saving...
+              Enregistrement...
             </div>
           ) : (
             <>
               <Save className="w-4 h-4" />
-              Save Changes
+              Enregistrer
             </>
           )}
         </button>
@@ -147,21 +159,21 @@ export default function AdminSettingsPage() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {section.fields.map((field) => (
-                <div key={field.key} className={field.key === "mapEmbed" || field.key === "address" ? "sm:col-span-2" : ""}>
-                  <label className="block text-sm font-medium text-dark/80 dark:text-white/80 mb-1.5">
+                <div key={field.key} className={field.key === "map_embed" || field.key === "address" ? "sm:col-span-2" : ""}>
+                  <label className="block text-sm font-medium text-dark/80 dark:text-white/80 mb-1.5 font-sans">
                     {field.label}
                   </label>
                   {field.type === "color" ? (
                     <div className="flex items-center gap-3">
                       <input
                         type="color"
-                        value={settings[field.key as keyof typeof settings]}
+                        value={localSettings[field.key]}
                         onChange={(e) => updateSetting(field.key, e.target.value)}
                         className="w-10 h-10 rounded-lg border border-border dark:border-border-dark cursor-pointer"
                       />
                       <input
                         type="text"
-                        value={settings[field.key as keyof typeof settings]}
+                        value={localSettings[field.key]}
                         onChange={(e) => updateSetting(field.key, e.target.value)}
                         className="flex-1 px-3.5 py-2.5 rounded-xl bg-card dark:bg-card-dark border border-border dark:border-border-dark text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 font-mono"
                       />
@@ -169,9 +181,9 @@ export default function AdminSettingsPage() {
                   ) : (
                     <input
                       type={field.type}
-                      value={settings[field.key as keyof typeof settings]}
+                      value={localSettings[field.key] || ""}
                       onChange={(e) => updateSetting(field.key, e.target.value)}
-                      className="w-full px-3.5 py-2.5 rounded-xl bg-card dark:bg-card-dark border border-border dark:border-border-dark text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all"
+                      className="w-full px-3.5 py-2.5 rounded-xl bg-card dark:bg-card-dark border border-border dark:border-border-dark text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all font-sans"
                     />
                   )}
                 </div>
