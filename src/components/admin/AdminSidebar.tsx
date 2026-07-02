@@ -59,8 +59,8 @@ export function AdminSidebar() {
       {/* Logo */}
       <div className="p-5 flex items-center justify-between border-b border-border dark:border-border-dark">
         <div className={cn("flex items-center gap-3", collapsed && "justify-center w-full")}>
-          <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center shrink-0">
-            <Coffee className="w-4 h-4 text-white" />
+          <div className="w-9 h-9 rounded-xl overflow-hidden border border-border dark:border-border-dark flex items-center justify-center shrink-0 bg-black">
+            <img src="/logo.jpg" alt="Logo" className="w-full h-full object-cover" />
           </div>
           {!collapsed && (
             <div>
