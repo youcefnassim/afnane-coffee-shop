@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { QrCode, Download, Copy, Printer, Table, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
-import { QRCodeSVG } from "qrcode.react";
+import { QRCodeSVG, QRCodeCanvas } from "qrcode.react";
 
 export default function AdminQRCodesPage() {
   const [origin, setOrigin] = useState("https://afnane-coffee-shop-9wam.vercel.app");
@@ -35,36 +35,25 @@ export default function AdminQRCodesPage() {
   };
 
   const downloadQR = () => {
-    const svgElement = document.getElementById("qr-code-svg");
-    if (!svgElement) return;
+    const canvasElement = document.getElementById("qr-code-canvas") as HTMLCanvasElement;
+    if (!canvasElement) {
+      toast.error("Erreur: QR Code introuvable");
+      return;
+    }
 
-    const svgString = new XMLSerializer().serializeToString(svgElement);
-    const svgBlob = new Blob([svgString], { type: "image/svg+xml;charset=utf-8" });
-    const URL = window.URL || window.webkitURL || window;
-    const blobURL = URL.createObjectURL(svgBlob);
-    
-    const image = new Image();
-    image.onload = () => {
-      const canvas = document.createElement("canvas");
-      canvas.width = 1000;
-      canvas.height = 1000;
-      const context = canvas.getContext("2d");
-      if (context) {
-        context.fillStyle = "#FFFFFF";
-        context.fillRect(0, 0, canvas.width, canvas.height);
-        context.drawImage(image, 50, 50, 900, 900);
-        
-        const png = canvas.toDataURL("image/png");
-        const downloadLink = document.createElement("a");
-        downloadLink.href = png;
-        downloadLink.download = `QR_AFNENE_${qrType === "general" ? "General" : `Table_${tableNumber}`}.png`;
-        document.body.appendChild(downloadLink);
-        downloadLink.click();
-        document.body.removeChild(downloadLink);
-      }
-    };
-    image.src = blobURL;
-    toast.success("Téléchargement du QR Code démarré ! 📥");
+    try {
+      const png = canvasElement.toDataURL("image/png");
+      const downloadLink = document.createElement("a");
+      downloadLink.href = png;
+      downloadLink.download = `QR_AFNENE_${qrType === "general" ? "General" : `Table_${tableNumber}`}.png`;
+      document.body.appendChild(downloadLink);
+      downloadLink.click();
+      document.body.removeChild(downloadLink);
+      toast.success("Téléchargement du QR Code démarré ! 📥");
+    } catch (err) {
+      console.error("Error downloading QR:", err);
+      toast.error("Impossible de télécharger le QR Code sur ce navigateur. Veuillez faire une capture d'écran.");
+    }
   };
 
   return (
@@ -195,8 +184,8 @@ export default function AdminQRCodesPage() {
 
               {/* QR Code Container */}
               <div className="w-56 h-56 mx-auto bg-white p-4 rounded-3xl shadow-sm mb-6 border border-border/60 flex items-center justify-center relative">
-                <QRCodeSVG
-                  id="qr-code-svg"
+                <QRCodeCanvas
+                  id="qr-code-canvas"
                   value={getTargetUrl()}
                   size={180}
                   level="H"
