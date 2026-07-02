@@ -180,13 +180,13 @@ export default function NewProductPage() {
 
           <div className="md:col-span-2">
             <label className="block text-xs font-semibold text-muted mb-2">Fichier Média (Vidéo ou Photo)</label>
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-2">
               <input
                 type="text"
                 value={mediaUrl}
                 onChange={(e) => setMediaUrl(e.target.value)}
                 placeholder="/Video.mp4 ou https://..."
-                className="flex-1 px-4 py-2.5 rounded-xl border border-border dark:border-border-dark bg-background dark:bg-white/5 text-dark dark:text-white text-sm focus:outline-none focus:border-primary"
+                className="flex-1 min-w-0 px-4 py-2.5 rounded-xl border border-border dark:border-border-dark bg-background dark:bg-white/5 text-dark dark:text-white text-sm focus:outline-none focus:border-primary"
               />
               <input
                 type="file"
@@ -198,7 +198,7 @@ export default function NewProductPage() {
               <button
                 type="button"
                 onClick={() => document.getElementById("new-media-upload")?.click()}
-                className="px-4 py-2.5 rounded-xl bg-primary/10 border border-primary/20 text-primary hover:bg-primary hover:text-white text-xs font-semibold flex items-center gap-1.5 transition-all shrink-0"
+                className="px-4 py-2.5 rounded-xl bg-primary/10 border border-primary/20 text-primary hover:bg-primary hover:text-white text-xs font-semibold flex items-center justify-center sm:justify-start gap-1.5 transition-all shrink-0"
               >
                 <Upload className="w-4 h-4" />
                 <span>Téléverser</span>
