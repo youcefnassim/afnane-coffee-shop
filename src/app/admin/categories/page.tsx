@@ -34,7 +34,13 @@ const INITIAL_CATEGORIES: AdminCategory[] = [
 
 export default function AdminCategoriesPage() {
   const [search, setSearch] = useState("");
-  const [categories, setCategories] = useState<AdminCategory[]>(INITIAL_CATEGORIES);
+  const [categories, setCategories] = useState<AdminCategory[]>(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("afnene_categories");
+      if (saved) return JSON.parse(saved);
+    }
+    return INITIAL_CATEGORIES;
+  });
   const [modalOpen, setModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<AdminCategory | null>(null);
 
@@ -42,6 +48,16 @@ export default function AdminCategoriesPage() {
   const [name, setName] = useState("");
   const [icon, setIcon] = useState("☕");
   const [status, setStatus] = useState<"Active" | "Inactive">("Active");
+
+  const saveCategories = (newCats: AdminCategory[] | ((prev: AdminCategory[]) => AdminCategory[])) => {
+    setCategories((prev) => {
+      const next = typeof newCats === "function" ? newCats(prev) : newCats;
+      if (typeof window !== "undefined") {
+        localStorage.setItem("afnene_categories", JSON.stringify(next));
+      }
+      return next;
+    });
+  };
 
   const openAddModal = () => {
     setEditingCategory(null);
@@ -60,7 +76,7 @@ export default function AdminCategoriesPage() {
   };
 
   const handleDelete = (id: string, catName: string) => {
-    setCategories((prev) => prev.filter((c) => c.id !== id));
+    saveCategories((prev) => prev.filter((c) => c.id !== id));
     toast.info(`Catégorie "${catName}" supprimée avec succès`);
   };
 
@@ -69,7 +85,7 @@ export default function AdminCategoriesPage() {
     if (!name.trim()) return;
 
     if (editingCategory) {
-      setCategories((prev) =>
+      saveCategories((prev) =>
         prev.map((c) =>
           c.id === editingCategory.id ? { ...c, name, icon, status } : c
         )
@@ -83,7 +99,7 @@ export default function AdminCategoriesPage() {
         itemCount: 0,
         status,
       };
-      setCategories((prev) => [newCat, ...prev]);
+      saveCategories((prev) => [newCat, ...prev]);
       toast.success(`Catégorie "${name}" créée avec succès !`);
     }
 

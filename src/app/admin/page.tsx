@@ -56,6 +56,9 @@ const RECENT_PRODUCTS = [
   { name: "Chicken Nuggets", category: "Snacks", price: "450 DA", status: "Unavailable" },
 ];
 
+import { useEffect, useState } from "react";
+import { useProductStore } from "@/store/useProductStore";
+
 const QUICK_ACTIONS = [
   { label: "Add Product", href: "/admin/products/new", icon: Package },
   { label: "New Promotion", href: "/admin/promotions", icon: Tag },
@@ -63,6 +66,73 @@ const QUICK_ACTIONS = [
 ];
 
 export default function AdminDashboardPage() {
+  const { products, fetchProducts } = useProductStore();
+  const [categoriesCount, setCategoriesCount] = useState(9);
+  const [promotionsCount, setPromotionsCount] = useState(4);
+
+  useEffect(() => {
+    fetchProducts();
+
+    if (typeof window !== "undefined") {
+      const savedCats = localStorage.getItem("afnene_categories");
+      if (savedCats) {
+        try {
+          const parsed = JSON.parse(savedCats);
+          setCategoriesCount(parsed.length);
+        } catch (e) {
+          console.error(e);
+        }
+      }
+
+      const savedPromos = localStorage.getItem("afnene_promotions");
+      if (savedPromos) {
+        try {
+          const parsed = JSON.parse(savedPromos);
+          setPromotionsCount(parsed.length);
+        } catch (e) {
+          console.error(e);
+        }
+      }
+    }
+  }, [fetchProducts]);
+
+  const statsData = [
+    {
+      label: "Total Products",
+      value: products.length.toString(),
+      change: `${products.filter((p) => p.available).length} disponibles`,
+      icon: Package,
+      color: "bg-primary/10 text-primary dark:text-secondary",
+      href: "/admin/products",
+    },
+    {
+      label: "Categories",
+      value: categoriesCount.toString(),
+      change: "Toutes actives",
+      icon: FolderOpen,
+      color: "bg-secondary/10 text-secondary",
+      href: "/admin/categories",
+    },
+    {
+      label: "Active Promotions",
+      value: promotionsCount.toString(),
+      change: "Offres en cours",
+      icon: Tag,
+      color: "bg-accent/10 text-accent",
+      href: "/admin/promotions",
+    },
+    {
+      label: "Today's Visitors",
+      value: "127",
+      change: "+12% vs hier",
+      icon: Users,
+      color: "bg-green-500/10 text-green-600 dark:text-green-400",
+      href: "/admin",
+    },
+  ];
+
+  const recentProducts = products.slice(0, 5);
+
   return (
     <div className="p-4 sm:p-6 lg:p-8 max-w-7xl">
       {/* Header */}
@@ -86,7 +156,7 @@ export default function AdminDashboardPage() {
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        {STATS.map((stat, index) => (
+        {statsData.map((stat, index) => (
           <motion.div
             key={stat.label}
             initial={{ opacity: 0, y: 20 }}
@@ -159,29 +229,29 @@ export default function AdminDashboardPage() {
                 </tr>
               </thead>
               <tbody>
-                {RECENT_PRODUCTS.map((product) => (
+                {recentProducts.map((product) => (
                   <tr
-                    key={product.name}
+                    key={product.id}
                     className="border-b border-border/50 dark:border-border-dark/50 last:border-0"
                   >
                     <td className="py-3 font-medium text-dark dark:text-white">
                       {product.name}
                     </td>
-                    <td className="hidden md:table-cell py-3 text-muted dark:text-muted-dark">
-                      {product.category}
+                    <td className="hidden md:table-cell py-3 text-muted dark:text-muted-dark capitalize">
+                      {product.category_id.replace("-", " ")}
                     </td>
                     <td className="py-3 font-semibold text-primary dark:text-secondary">
-                      {product.price}
+                      {product.price} DA
                     </td>
                     <td className="py-3">
                       <span
                         className={
-                          product.status === "Available"
+                          product.available
                             ? "badge-available"
                             : "badge-unavailable"
                         }
                       >
-                        {product.status}
+                        {product.available ? "Disponible" : "Indisponible"}
                       </span>
                     </td>
                   </tr>

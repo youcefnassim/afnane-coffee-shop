@@ -42,7 +42,13 @@ const INITIAL_PROMOTIONS: AdminPromotion[] = [
 ];
 
 export default function AdminPromotionsPage() {
-  const [promotions, setPromotions] = useState<AdminPromotion[]>(INITIAL_PROMOTIONS);
+  const [promotions, setPromotions] = useState<AdminPromotion[]>(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("afnene_promotions");
+      if (saved) return JSON.parse(saved);
+    }
+    return INITIAL_PROMOTIONS;
+  });
   const [modalOpen, setModalOpen] = useState(false);
   const [editingPromo, setEditingPromo] = useState<AdminPromotion | null>(null);
 
@@ -52,6 +58,16 @@ export default function AdminPromotionsPage() {
   const [discount, setDiscount] = useState(15);
   const [endDate, setEndDate] = useState("");
   const [status, setStatus] = useState<"Active" | "Expired">("Active");
+
+  const savePromotions = (newPromos: AdminPromotion[] | ((prev: AdminPromotion[]) => AdminPromotion[])) => {
+    setPromotions((prev) => {
+      const next = typeof newPromos === "function" ? newPromos(prev) : newPromos;
+      if (typeof window !== "undefined") {
+        localStorage.setItem("afnene_promotions", JSON.stringify(next));
+      }
+      return next;
+    });
+  };
 
   const openAddModal = () => {
     setEditingPromo(null);
@@ -74,7 +90,7 @@ export default function AdminPromotionsPage() {
   };
 
   const handleDelete = (id: string, promoTitle: string) => {
-    setPromotions((prev) => prev.filter((p) => p.id !== id));
+    savePromotions((prev) => prev.filter((p) => p.id !== id));
     toast.info(`Promotion "${promoTitle}" supprimée`);
   };
 
@@ -83,7 +99,7 @@ export default function AdminPromotionsPage() {
     if (!title.trim()) return;
 
     if (editingPromo) {
-      setPromotions((prev) =>
+      savePromotions((prev) =>
         prev.map((p) =>
           p.id === editingPromo.id
             ? { ...p, title, product_name: productName, discount, end_date: endDate, status }
@@ -100,8 +116,8 @@ export default function AdminPromotionsPage() {
         end_date: endDate,
         status,
       };
-      setPromotions((prev) => [newPromo, ...prev]);
-      toast.success(`Nouvelle promotion "${title}" créée !`);
+      savePromotions((prev) => [newPromo, ...prev]);
+      toast.success(`Promotion "${title}" créée avec succès !`);
     }
 
     setModalOpen(false);
