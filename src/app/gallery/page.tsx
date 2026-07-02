@@ -11,9 +11,9 @@ import { supabase } from "@/lib/supabase";
 
 const GALLERY_FILTERS = [
   { id: "all", label: "All" },
-  { id: "shop", label: "Coffee Shop" },
-  { id: "food", label: "Food & Drinks" },
-  { id: "customers", label: "Moments" },
+  { id: "Coffee Shop", label: "Coffee Shop" },
+  { id: "Food & Drinks", label: "Food & Drinks" },
+  { id: "Moments", label: "Moments" },
 ];
 
 // Masonry heights for visual variety
