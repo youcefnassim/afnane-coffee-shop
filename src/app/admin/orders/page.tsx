@@ -119,7 +119,7 @@ export default function AdminOrdersPage() {
   const filteredOrders = filter === "all" ? orders : orders.filter((o) => o.status === filter);
 
   return (
-    <div className="p-6 md:p-10 space-y-8">
+    <div className="p-4 sm:p-6 md:p-10 space-y-8">
       {/* Printable Thermal Receipt Modal Container (Visible only during window.print) */}
       {printingOrder && (
         <div className="hidden print:block fixed inset-0 bg-white text-black p-4 font-mono text-xs w-[80mm] mx-auto leading-tight">

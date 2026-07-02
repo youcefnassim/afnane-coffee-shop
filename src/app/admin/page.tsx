@@ -64,7 +64,7 @@ const QUICK_ACTIONS = [
 
 export default function AdminDashboardPage() {
   return (
-    <div className="p-6 lg:p-8 max-w-7xl">
+    <div className="p-4 sm:p-6 lg:p-8 max-w-7xl">
       {/* Header */}
       <div className="mb-8">
         <motion.div
@@ -147,7 +147,7 @@ export default function AdminDashboardPage() {
                   <th className="text-left py-2.5 font-semibold text-muted dark:text-muted-dark text-xs uppercase tracking-wider">
                     Product
                   </th>
-                  <th className="text-left py-2.5 font-semibold text-muted dark:text-muted-dark text-xs uppercase tracking-wider">
+                  <th className="hidden md:table-cell text-left py-2.5 font-semibold text-muted dark:text-muted-dark text-xs uppercase tracking-wider">
                     Category
                   </th>
                   <th className="text-left py-2.5 font-semibold text-muted dark:text-muted-dark text-xs uppercase tracking-wider">
@@ -167,7 +167,7 @@ export default function AdminDashboardPage() {
                     <td className="py-3 font-medium text-dark dark:text-white">
                       {product.name}
                     </td>
-                    <td className="py-3 text-muted dark:text-muted-dark">
+                    <td className="hidden md:table-cell py-3 text-muted dark:text-muted-dark">
                       {product.category}
                     </td>
                     <td className="py-3 font-semibold text-primary dark:text-secondary">

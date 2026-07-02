@@ -89,7 +89,7 @@ export default function AdminSettingsPage() {
   ];
 
   return (
-    <div className="p-6 lg:p-8 max-w-4xl">
+    <div className="p-4 sm:p-6 lg:p-8 max-w-4xl">
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: 10 }}

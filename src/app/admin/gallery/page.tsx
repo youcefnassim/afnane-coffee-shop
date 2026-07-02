@@ -109,7 +109,7 @@ export default function AdminGalleryPage() {
   };
 
   return (
-    <div className="p-6 lg:p-8 max-w-7xl">
+    <div className="p-4 sm:p-6 lg:p-8 max-w-7xl">
       {/* Hidden File Input */}
       <input 
         type="file" 
@@ -229,7 +229,7 @@ export default function AdminGalleryPage() {
               initial={{ scale: 0.9, opacity: 0 }} 
               animate={{ scale: 1, opacity: 1 }} 
               exit={{ scale: 0.9, opacity: 0 }} 
-              className="relative w-full max-w-md bg-card dark:bg-card-dark p-6 rounded-3xl shadow-2xl border border-border/40 z-10"
+              className="relative w-full max-w-md bg-card dark:bg-card-dark p-4 sm:p-6 rounded-3xl shadow-2xl border border-border/40 z-10"
             >
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-bold text-dark dark:text-white">Ajouter un nouveau média</h3>

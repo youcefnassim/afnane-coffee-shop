@@ -60,7 +60,7 @@ export default function AdminProductsPage() {
   );
 
   return (
-    <div className="p-6 lg:p-8 max-w-7xl">
+    <div className="p-4 sm:p-6 lg:p-8 max-w-7xl">
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: 10 }}
@@ -117,7 +117,7 @@ export default function AdminProductsPage() {
                 <th className="text-left py-3 px-5 font-semibold text-muted dark:text-muted-dark text-xs uppercase tracking-wider">
                   Produit
                 </th>
-                <th className="text-left py-3 px-5 font-semibold text-muted dark:text-muted-dark text-xs uppercase tracking-wider">
+                <th className="hidden md:table-cell text-left py-3 px-5 font-semibold text-muted dark:text-muted-dark text-xs uppercase tracking-wider">
                   Catégorie
                 </th>
                 <th className="text-left py-3 px-5 font-semibold text-muted dark:text-muted-dark text-xs uppercase tracking-wider">
@@ -126,7 +126,7 @@ export default function AdminProductsPage() {
                 <th className="text-left py-3 px-5 font-semibold text-muted dark:text-muted-dark text-xs uppercase tracking-wider">
                   Statut
                 </th>
-                <th className="text-left py-3 px-5 font-semibold text-muted dark:text-muted-dark text-xs uppercase tracking-wider">
+                <th className="hidden lg:table-cell text-left py-3 px-5 font-semibold text-muted dark:text-muted-dark text-xs uppercase tracking-wider">
                   Badges
                 </th>
                 <th className="text-right py-3 px-5 font-semibold text-muted dark:text-muted-dark text-xs uppercase tracking-wider">
@@ -166,7 +166,7 @@ export default function AdminProductsPage() {
                       </div>
                     </div>
                   </td>
-                  <td className="py-3.5 px-5 text-muted dark:text-muted-dark capitalize">
+                  <td className="hidden md:table-cell py-3.5 px-5 text-muted dark:text-muted-dark capitalize">
                     {product.category_id}
                   </td>
                   <td className="py-3.5 px-5 font-semibold text-primary dark:text-secondary">
@@ -177,7 +177,7 @@ export default function AdminProductsPage() {
                       {product.available ? "Disponible" : "Épuisé"}
                     </span>
                   </td>
-                  <td className="py-3.5 px-5">
+                  <td className="hidden lg:table-cell py-3.5 px-5">
                     <div className="flex gap-1.5 flex-wrap">
                       {product.best_seller && (
                         <span className="badge-bestseller flex items-center gap-0.5">
@@ -242,7 +242,7 @@ export default function AdminProductsPage() {
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="relative w-full max-w-lg bg-card dark:bg-card-dark p-6 md:p-8 rounded-3xl shadow-2xl border border-border/40 z-10 space-y-4 max-h-[90vh] overflow-y-auto"
+              className="relative w-full max-w-lg bg-card dark:bg-card-dark p-4 sm:p-6 md:p-8 rounded-3xl shadow-2xl border border-border/40 z-10 space-y-4 max-h-[90vh] overflow-y-auto"
             >
               <div className="flex items-center justify-between pb-2 border-b border-border/40">
                 <h3 className="text-lg font-bold text-dark dark:text-white" style={{ fontFamily: "var(--font-heading)" }}>
@@ -296,13 +296,13 @@ export default function AdminProductsPage() {
 
                 <div>
                   <label className="block text-xs font-semibold text-muted mb-1">Média du produit (Vidéo / Photo)</label>
-                  <div className="flex gap-2">
+                  <div className="flex flex-col sm:flex-row gap-2">
                     <input
                       type="text"
                       value={editingProduct.media_url || ""}
                       onChange={(e) => setEditingProduct({ ...editingProduct, media_url: e.target.value })}
                       placeholder="/Video.mp4 ou https://..."
-                      className="flex-1 px-4 py-2.5 rounded-xl border border-border dark:border-border-dark bg-background dark:bg-white/5 text-dark dark:text-white text-sm"
+                      className="flex-1 min-w-0 px-4 py-2.5 rounded-xl border border-border dark:border-border-dark bg-background dark:bg-white/5 text-dark dark:text-white text-sm"
                     />
                     <input
                       type="file"
@@ -326,7 +326,7 @@ export default function AdminProductsPage() {
                     <button
                       type="button"
                       onClick={() => document.getElementById("edit-media-upload")?.click()}
-                      className="px-4 py-2.5 rounded-xl bg-primary/10 border border-primary/20 text-primary hover:bg-primary hover:text-white text-xs font-semibold flex items-center gap-1.5 transition-all shrink-0"
+                      className="px-4 py-2.5 rounded-xl bg-primary/10 border border-primary/20 text-primary hover:bg-primary hover:text-white text-xs font-semibold flex items-center justify-center sm:justify-start gap-1.5 transition-all shrink-0"
                     >
                       <Upload className="w-4 h-4" />
                       <span>Téléverser</span>

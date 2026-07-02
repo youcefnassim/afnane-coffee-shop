@@ -95,7 +95,7 @@ export default function AdminCategoriesPage() {
   );
 
   return (
-    <div className="p-6 lg:p-8 max-w-6xl">
+    <div className="p-4 sm:p-6 lg:p-8 max-w-6xl">
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: 10 }}
@@ -220,7 +220,7 @@ export default function AdminCategoriesPage() {
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="relative w-full max-w-md bg-card dark:bg-card-dark p-6 rounded-3xl shadow-2xl border border-border/40 z-10 space-y-4"
+              className="relative w-full max-w-md bg-card dark:bg-card-dark p-4 sm:p-6 rounded-3xl shadow-2xl border border-border/40 z-10 space-y-4"
             >
               <div className="flex items-center justify-between pb-2 border-b border-border/40">
                 <h3 className="text-lg font-bold text-dark dark:text-white" style={{ fontFamily: "var(--font-heading)" }}>

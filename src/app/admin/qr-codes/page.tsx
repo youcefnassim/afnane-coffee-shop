@@ -13,7 +13,7 @@ export default function AdminQRCodesPage() {
   };
 
   return (
-    <div className="p-6 lg:p-8 max-w-5xl">
+    <div className="p-4 sm:p-6 lg:p-8 max-w-5xl">
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: 10 }}

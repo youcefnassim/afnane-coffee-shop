@@ -108,7 +108,7 @@ export default function AdminPromotionsPage() {
   };
 
   return (
-    <div className="p-6 lg:p-8 max-w-7xl">
+    <div className="p-4 sm:p-6 lg:p-8 max-w-7xl">
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: 10 }}
@@ -146,7 +146,7 @@ export default function AdminPromotionsPage() {
                 <th className="text-left py-3 px-5 font-semibold text-muted dark:text-muted-dark text-xs uppercase tracking-wider">
                   Titre de l&apos;offre
                 </th>
-                <th className="text-left py-3 px-5 font-semibold text-muted dark:text-muted-dark text-xs uppercase tracking-wider">
+                <th className="hidden md:table-cell text-left py-3 px-5 font-semibold text-muted dark:text-muted-dark text-xs uppercase tracking-wider">
                   Cible / Produit
                 </th>
                 <th className="text-left py-3 px-5 font-semibold text-muted dark:text-muted-dark text-xs uppercase tracking-wider">
@@ -182,7 +182,7 @@ export default function AdminPromotionsPage() {
                       </span>
                     </div>
                   </td>
-                  <td className="py-3.5 px-5 text-muted dark:text-muted-dark">
+                  <td className="hidden md:table-cell py-3.5 px-5 text-muted dark:text-muted-dark">
                     {promo.product_name}
                   </td>
                   <td className="py-3.5 px-5">
@@ -238,7 +238,7 @@ export default function AdminPromotionsPage() {
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="relative w-full max-w-md bg-card dark:bg-card-dark p-6 rounded-3xl shadow-2xl border border-border/40 z-10 space-y-4"
+              className="relative w-full max-w-md bg-card dark:bg-card-dark p-4 sm:p-6 rounded-3xl shadow-2xl border border-border/40 z-10 space-y-4"
             >
               <div className="flex items-center justify-between pb-2 border-b border-border/40">
                 <h3 className="text-lg font-bold text-dark dark:text-white" style={{ fontFamily: "var(--font-heading)" }}>
