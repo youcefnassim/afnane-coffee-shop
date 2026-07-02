@@ -22,9 +22,9 @@ export async function uploadMedia(file: File, folder: string = "general"): Promi
       .getPublicUrl(filePath);
 
     return publicUrl;
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error uploading media:", error);
-    return null;
+    throw new Error(error.message || "Erreur d'upload vers Supabase Storage");
   }
 }
 

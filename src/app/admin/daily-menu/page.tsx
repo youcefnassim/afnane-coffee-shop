@@ -74,9 +74,9 @@ export default function AdminDailyMenuPage() {
 
       toast.success("Menu du jour mis à jour avec succès ! 🌟", { id: "menu-save" });
       setSelectedFile(null);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error saving menu:", error);
-      toast.error("Erreur lors de la sauvegarde", { id: "menu-save" });
+      toast.error(error.message || "Erreur lors de la sauvegarde", { id: "menu-save" });
     } finally {
       setIsUploading(false);
     }
