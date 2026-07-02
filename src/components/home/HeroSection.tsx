@@ -83,7 +83,7 @@ export function HeroSection() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.6, ease: [0.25, 0.4, 0.25, 1] }}
           >
-            <Link href="/menu" className="btn-secondary text-dark font-bold text-base px-8 py-3.5 rounded-xl hover:bg-white transition-colors">
+            <Link href="/menu" className="btn-secondary text-white font-bold text-base px-8 py-3.5 rounded-xl hover:bg-white hover:text-dark transition-colors">
               {t.hero.cta}
             </Link>
           </motion.div>
