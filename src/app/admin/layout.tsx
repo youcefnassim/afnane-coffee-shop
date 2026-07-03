@@ -36,7 +36,7 @@ export default function AdminLayout({
   return (
     <div className="flex min-h-screen bg-background dark:bg-background-dark relative overflow-hidden">
       <AdminSidebar />
-      <main className="flex-1 lg:overflow-y-auto z-10 relative">
+      <main className="flex-1 min-w-0 lg:overflow-y-auto z-10 relative">
         {/* Subtle Background Logo Watermark Centered */}
         <div 
           className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] sm:w-[500px] sm:h-[500px] rounded-full opacity-[0.18] dark:opacity-[0.06] pointer-events-none bg-no-repeat bg-contain bg-center -z-10"
