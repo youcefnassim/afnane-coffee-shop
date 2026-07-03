@@ -13,7 +13,12 @@ export default function AdminQRCodesPage() {
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      setOrigin(window.location.origin);
+      // Fallback automatically to the working Vercel domain if accessing via afnene.com (due to SSL issues)
+      if (window.location.hostname.includes("afnene.com")) {
+        setOrigin("https://afnane-coffee-shop-9wam.vercel.app");
+      } else {
+        setOrigin(window.location.origin);
+      }
     }
   }, []);
 
@@ -35,7 +40,8 @@ export default function AdminQRCodesPage() {
 
   const getQrImageUrl = (size = 300) => {
     const targetUrl = getTargetUrl();
-    return `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&color=004b36&data=${encodeURIComponent(targetUrl)}`;
+    // Using black (color=000000) for maximum contrast so all phone cameras scan it instantly
+    return `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&color=000000&data=${encodeURIComponent(targetUrl)}`;
   };
 
   const downloadQR = async () => {
