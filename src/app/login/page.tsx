@@ -46,8 +46,8 @@ export default function LoginPage() {
       >
         {/* Logo & Header */}
         <div className="text-center mb-8">
-          <div className="w-16 h-16 rounded-2xl bg-secondary/20 border border-secondary/40 flex items-center justify-center mx-auto mb-4 shadow-inner">
-            <Coffee className="w-8 h-8 text-secondary" />
+          <div className="w-16 h-16 rounded-2xl overflow-hidden border border-secondary/40 flex items-center justify-center mx-auto mb-4 bg-black shadow-inner">
+            <img src="/logo.jpg" alt="Logo" className="w-full h-full object-cover" />
           </div>
           <h1 className="text-2xl font-bold tracking-wider uppercase text-white" style={{ fontFamily: "var(--font-heading)" }}>
             AFNENE COFFEE
