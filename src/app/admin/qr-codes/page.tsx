@@ -4,7 +4,6 @@ import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { QrCode, Download, Copy, Printer, Table, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
-import { QRCodeSVG, QRCodeCanvas } from "qrcode.react";
 
 export default function AdminQRCodesPage() {
   const [origin, setOrigin] = useState("https://afnane-coffee-shop-9wam.vercel.app");
@@ -34,25 +33,36 @@ export default function AdminQRCodesPage() {
     window.print();
   };
 
-  const downloadQR = () => {
-    const canvasElement = document.getElementById("qr-code-canvas") as HTMLCanvasElement;
-    if (!canvasElement) {
-      toast.error("Erreur: QR Code introuvable");
-      return;
-    }
+  const getQrImageUrl = (size = 300) => {
+    const targetUrl = getTargetUrl();
+    return `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&color=004b36&data=${encodeURIComponent(targetUrl)}`;
+  };
 
-    try {
-      const png = canvasElement.toDataURL("image/png");
-      const downloadLink = document.createElement("a");
-      downloadLink.href = png;
-      downloadLink.download = `QR_AFNENE_${qrType === "general" ? "General" : `Table_${tableNumber}`}.png`;
-      document.body.appendChild(downloadLink);
-      downloadLink.click();
-      document.body.removeChild(downloadLink);
-      toast.success("Téléchargement du QR Code démarré ! 📥");
-    } catch (err) {
-      console.error("Error downloading QR:", err);
-      toast.error("Impossible de télécharger le QR Code sur ce navigateur. Veuillez faire une capture d'écran.");
+  const downloadQR = async () => {
+    const imageUrl = getQrImageUrl(500);
+    const isMobile = typeof navigator !== "undefined" && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+    if (isMobile) {
+      window.open(imageUrl, "_blank");
+      toast.info("Le QR Code s'est ouvert dans un nouvel onglet. Appuyez longuement sur l'image pour l'enregistrer. 📱");
+    } else {
+      try {
+        const response = await fetch(imageUrl);
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `QR_AFNENE_${qrType === "general" ? "General" : `Table_${tableNumber}`}.png`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+        toast.success("Téléchargement du QR Code démarré ! 📥");
+      } catch (err) {
+        console.error("Error downloading QR:", err);
+        window.open(imageUrl, "_blank");
+        toast.info("Le QR Code s'est ouvert dans un nouvel onglet. Vous pouvez l'enregistrer à partir de là.");
+      }
     }
   };
 
@@ -73,12 +83,10 @@ export default function AdminQRCodesPage() {
 
           <div className="space-y-6">
             <div className="bg-[#004B36]/5 p-6 rounded-3xl border-2 border-dashed border-[#004B36]/30 inline-block">
-              <QRCodeSVG
-                value={getTargetUrl()}
-                size={220}
-                level="H"
-                includeMargin={false}
-                fgColor="#004B36"
+              <img
+                src={getQrImageUrl(220)}
+                alt="QR Code"
+                className="w-[220px] h-[220px]"
               />
             </div>
             {qrType === "table" ? (
@@ -198,13 +206,10 @@ export default function AdminQRCodesPage() {
 
               {/* QR Code Container */}
               <div className="w-56 h-56 mx-auto bg-white p-4 rounded-3xl shadow-sm mb-6 border border-border/60 flex items-center justify-center relative">
-                <QRCodeCanvas
-                  id="qr-code-canvas"
-                  value={getTargetUrl()}
-                  size={180}
-                  level="H"
-                  includeMargin={false}
-                  fgColor="#004B36"
+                <img
+                  src={getQrImageUrl(180)}
+                  alt="QR Code"
+                  className="w-[180px] h-[180px]"
                 />
               </div>
             </div>
