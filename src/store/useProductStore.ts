@@ -341,6 +341,25 @@ export const useProductStore = create<ProductState>()(
         set({ isLoading: true, error: null });
 
         try {
+          // 0. Ensure all required categories exist in Supabase to satisfy foreign key constraints
+          const defaultCategories = [
+            { id: "coffee", name: { fr: "Café & Chauds", en: "Coffee & Hot Drinks", ar: "قهوة ومشروبات ساخنة" }, icon: "☕", sort_order: 1 },
+            { id: "cold-drinks", name: { fr: "Boissons Froides", en: "Cold Drinks", ar: "مشروبات باردة" }, icon: "🧊", sort_order: 2 },
+            { id: "breakfast", name: { fr: "Petit Déjeuner", en: "Breakfast", ar: "فطور الصباح" }, icon: "🥐", sort_order: 3 },
+            { id: "sandwiches", name: { fr: "Sandwichs", en: "Sandwiches", ar: "سندويشات" }, icon: "🥪", sort_order: 4 },
+            { id: "burgers", name: { fr: "Burgers", en: "Burgers", ar: "برجر" }, icon: "🍔", sort_order: 5 },
+            { id: "pizza", name: { fr: "Pizza", en: "Pizza", ar: "بيتزا" }, icon: "🍕", sort_order: 6 },
+            { id: "desserts", name: { fr: "Desserts & Sucrés", en: "Desserts & Sweets", ar: "حلويات" }, icon: "🍰", sort_order: 7 },
+            { id: "salads", name: { fr: "Salades", en: "Salades", ar: "سلطات" }, icon: "🥗", sort_order: 8 },
+            { id: "snacks", name: { fr: "Snacks & Salés", en: "Snacks & Salty", ar: "مقبلات ومملحات" }, icon: "🍿", sort_order: 9 },
+          ];
+
+          const { error: catError } = await supabase
+            .from("categories")
+            .upsert(defaultCategories);
+
+          if (catError) throw catError;
+
           // 1. Delete all products from Supabase
           const { error: deleteError } = await supabase
             .from("products")
