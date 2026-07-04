@@ -78,10 +78,28 @@ export default function AdminProductsPage() {
             Gérez vos plats et boissons ({products.length} au total)
           </p>
         </div>
-        <Link href="/admin/products/new" className="btn-primary text-sm px-5 py-2.5 inline-flex items-center gap-2">
-          <Plus className="w-4 h-4" />
-          Ajouter un produit
-        </Link>
+        <div className="flex flex-wrap items-center gap-3">
+          <button
+            onClick={async () => {
+              if (confirm("Voulez-vous écraser le menu de la base de données et importer la nouvelle carte de 92 produits d'AFNENE ? Cette action est irréversible.")) {
+                const toastId = toast.loading("Importation du menu en cours...");
+                try {
+                  await useProductStore.getState().resetToDefaultMenu();
+                  toast.success("Nouveau menu importé avec succès !", { id: toastId });
+                } catch (error: any) {
+                  toast.error(`Erreur d'importation : ${error.message || error}`, { id: toastId });
+                }
+              }
+            }}
+            className="border border-[#D6B370]/50 text-[#D6B370] hover:bg-[#D6B370]/10 text-sm px-4 py-2.5 rounded-xl transition-all duration-300 font-medium"
+          >
+            Importer le menu AFNENE (92 items)
+          </button>
+          <Link href="/admin/products/new" className="btn-primary text-sm px-5 py-2.5 inline-flex items-center gap-2">
+            <Plus className="w-4 h-4" />
+            Ajouter un produit
+          </Link>
+        </div>
       </motion.div>
 
       {/* Search Bar */}
