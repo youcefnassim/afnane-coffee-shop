@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Plus,
@@ -11,6 +11,7 @@ import {
   X,
 } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/lib/supabase";
 
 interface AdminCategory {
   id: string;
@@ -20,27 +21,10 @@ interface AdminCategory {
   status: "Active" | "Inactive";
 }
 
-const INITIAL_CATEGORIES: AdminCategory[] = [
-  { id: "1", name: "Café (Coffee)", icon: "☕", itemCount: 12, status: "Active" },
-  { id: "2", name: "Boissons froides", icon: "🧊", itemCount: 8, status: "Active" },
-  { id: "3", name: "Petit déjeuner", icon: "🥐", itemCount: 5, status: "Active" },
-  { id: "4", name: "Sandwichs", icon: "🥪", itemCount: 6, status: "Active" },
-  { id: "5", name: "Burgers", icon: "🍔", itemCount: 4, status: "Active" },
-  { id: "6", name: "Pizza", icon: "🍕", itemCount: 7, status: "Active" },
-  { id: "7", name: "Desserts", icon: "🍰", itemCount: 9, status: "Active" },
-  { id: "8", name: "Salades", icon: "🥗", itemCount: 3, status: "Active" },
-  { id: "9", name: "Snacks", icon: "🍿", itemCount: 5, status: "Active" },
-];
-
 export default function AdminCategoriesPage() {
   const [search, setSearch] = useState("");
-  const [categories, setCategories] = useState<AdminCategory[]>(() => {
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("afnene_categories");
-      if (saved) return JSON.parse(saved);
-    }
-    return INITIAL_CATEGORIES;
-  });
+  const [categories, setCategories] = useState<AdminCategory[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<AdminCategory | null>(null);
 
@@ -49,14 +33,49 @@ export default function AdminCategoriesPage() {
   const [icon, setIcon] = useState("☕");
   const [status, setStatus] = useState<"Active" | "Inactive">("Active");
 
-  const saveCategories = (newCats: AdminCategory[] | ((prev: AdminCategory[]) => AdminCategory[])) => {
-    setCategories((prev) => {
-      const next = typeof newCats === "function" ? newCats(prev) : newCats;
-      if (typeof window !== "undefined") {
-        localStorage.setItem("afnene_categories", JSON.stringify(next));
+  useEffect(() => {
+    loadCategoriesData();
+  }, []);
+
+  const loadCategoriesData = async () => {
+    try {
+      setIsLoading(true);
+      const { data: cats, error: catError } = await supabase
+        .from("categories")
+        .select("*")
+        .order("sort_order", { ascending: true });
+
+      if (catError) throw catError;
+
+      const { data: prods, error: prodError } = await supabase
+        .from("products")
+        .select("category_id");
+
+      if (prodError) throw prodError;
+
+      const counts: Record<string, number> = {};
+      (prods || []).forEach((p: any) => {
+        if (p.category_id) {
+          counts[p.category_id] = (counts[p.category_id] || 0) + 1;
+        }
+      });
+
+      if (cats) {
+        const mapped: AdminCategory[] = cats.map((c: any) => ({
+          id: c.id,
+          name: typeof c.name === "object" ? (c.name?.fr || c.name?.en || "") : c.name || "",
+          icon: c.icon || "☕",
+          itemCount: counts[c.id] || 0,
+          status: "Active",
+        }));
+        setCategories(mapped);
       }
-      return next;
-    });
+    } catch (err: any) {
+      console.error("Failed to load categories:", err);
+      toast.error(`Erreur de chargement : ${err.message || err}`);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const openAddModal = () => {
@@ -75,35 +94,82 @@ export default function AdminCategoriesPage() {
     setModalOpen(true);
   };
 
-  const handleDelete = (id: string, catName: string) => {
-    saveCategories((prev) => prev.filter((c) => c.id !== id));
-    toast.info(`Catégorie "${catName}" supprimée avec succès`);
+  const handleDelete = async (id: string, catName: string) => {
+    if (confirm(`Voulez-vous vraiment supprimer la catégorie "${catName}" ?`)) {
+      const toastId = toast.loading("Suppression...");
+      try {
+        const { error } = await supabase
+          .from("categories")
+          .delete()
+          .eq("id", id);
+
+        if (error) throw error;
+
+        setCategories((prev) => prev.filter((c) => c.id !== id));
+        toast.success(`Catégorie "${catName}" supprimée avec succès`, { id: toastId });
+      } catch (err: any) {
+        toast.error(`Erreur : ${err.message || err}`, { id: toastId });
+      }
+    }
   };
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) return;
 
-    if (editingCategory) {
-      saveCategories((prev) =>
-        prev.map((c) =>
-          c.id === editingCategory.id ? { ...c, name, icon, status } : c
-        )
-      );
-      toast.success(`Catégorie "${name}" mise à jour !`);
-    } else {
-      const newCat: AdminCategory = {
-        id: Date.now().toString(),
-        name,
-        icon,
-        itemCount: 0,
-        status,
-      };
-      saveCategories((prev) => [newCat, ...prev]);
-      toast.success(`Catégorie "${name}" créée avec succès !`);
-    }
+    const toastId = toast.loading("Enregistrement...");
+    try {
+      if (editingCategory) {
+        const { error } = await supabase
+          .from("categories")
+          .update({
+            name: { fr: name, en: name, ar: name },
+            icon,
+          })
+          .eq("id", editingCategory.id);
 
-    setModalOpen(false);
+        if (error) throw error;
+
+        setCategories((prev) =>
+          prev.map((c) =>
+            c.id === editingCategory.id ? { ...c, name, icon } : c
+          )
+        );
+        toast.success(`Catégorie "${name}" mise à jour !`, { id: toastId });
+      } else {
+        const newId = name.toLowerCase().trim()
+          .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+          .replace(/[^a-z0-9]+/g, "-");
+        
+        const newCatDb = {
+          id: newId,
+          name: { fr: name, en: name, ar: name },
+          icon,
+          sort_order: categories.length + 1,
+        };
+
+        const { error } = await supabase
+          .from("categories")
+          .insert(newCatDb);
+
+        if (error) throw error;
+
+        setCategories((prev) => [
+          ...prev,
+          {
+            id: newId,
+            name,
+            icon,
+            itemCount: 0,
+            status: "Active",
+          },
+        ]);
+        toast.success(`Catégorie "${name}" créée avec succès !`, { id: toastId });
+      }
+      setModalOpen(false);
+    } catch (err: any) {
+      toast.error(`Erreur : ${err.message || err}`, { id: toastId });
+    }
   };
 
   const filtered = categories.filter((c) =>

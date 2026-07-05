@@ -1,24 +1,79 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Coffee, CupSoda, Croissant, Ham, Sandwich, Pizza, CakeSlice, Salad, Popcorn, UtensilsCrossed } from "lucide-react";
 import Link from "next/link";
 import { StaggerContainer, StaggerItem, AnimationWrapper } from "@/components/shared/AnimationWrapper";
+import { supabase } from "@/lib/supabase";
 
-const CATEGORIES = [
-  { name: "Café", icon: Coffee, href: "/menu#cafe" },
-  { name: "Boissons froides", icon: CupSoda, href: "/menu#boissons-froides" },
-  { name: "Petit déjeuner", icon: Croissant, href: "/menu#petit-dejeuner" },
-  { name: "Burgers", icon: Ham, href: "/menu#burgers" },
-  { name: "Sandwichs", icon: Sandwich, href: "/menu#sandwichs" },
-  { name: "Pizza", icon: Pizza, href: "/menu#pizza" },
-  { name: "Desserts", icon: CakeSlice, href: "/menu#desserts" },
-  { name: "Salades", icon: Salad, href: "/menu#salades" },
-  { name: "Snacks", icon: Popcorn, href: "/menu#snacks" },
-  { name: "Menu du jour", icon: UtensilsCrossed, href: "/#menu-du-jour" },
-];
+const ICON_MAP: Record<string, any> = {
+  "☕": Coffee,
+  "🧊": CupSoda,
+  "🥐": Croissant,
+  "🍔": Ham,
+  "🥪": Sandwich,
+  "🍕": Pizza,
+  "🍰": CakeSlice,
+  "🥗": Salad,
+  "🍿": Popcorn,
+};
+
+interface DbCategory {
+  id: string;
+  name: any;
+  icon: string;
+}
 
 export function CategoriesGrid() {
+  const [categories, setCategories] = useState<DbCategory[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadCategories() {
+      try {
+        const { data, error } = await supabase
+          .from("categories")
+          .select("*")
+          .order("sort_order", { ascending: true });
+
+        if (error) throw error;
+
+        if (data && data.length > 0) {
+          setCategories(data);
+        } else {
+          // Fallback if empty
+          setCategories([
+            { id: "coffee", name: { fr: "Café" }, icon: "☕" },
+            { id: "cold-drinks", name: { fr: "Boissons froides" }, icon: "🧊" },
+            { id: "breakfast", name: { fr: "Petit déjeuner" }, icon: "🥐" },
+            { id: "burgers", name: { fr: "Burgers" }, icon: "🍔" },
+            { id: "sandwiches", name: { fr: "Sandwichs" }, icon: "🥪" },
+            { id: "pizza", name: { fr: "Pizza" }, icon: "🍕" },
+            { id: "desserts", name: { fr: "Desserts" }, icon: "🍰" },
+            { id: "salads", name: { fr: "Salades" }, icon: "🥗" },
+            { id: "snacks", name: { fr: "Snacks" }, icon: "🍿" },
+          ]);
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    loadCategories();
+  }, []);
+
+  const getIcon = (iconStr: string) => {
+    return ICON_MAP[iconStr] || UtensilsCrossed;
+  };
+
+  const getName = (nameObj: any) => {
+    if (!nameObj) return "";
+    if (typeof nameObj === "string") return nameObj;
+    return nameObj.fr || nameObj.en || nameObj.ar || Object.values(nameObj)[0] || "";
+  };
+
   return (
     <section className="py-24 bg-background">
       <div className="container-premium max-w-6xl mx-auto">
@@ -46,18 +101,32 @@ export function CategoriesGrid() {
           className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-y-12 gap-x-6" 
           staggerDelay={0.05}
         >
-          {CATEGORIES.map((category) => (
-            <StaggerItem key={category.name}>
-              <Link href={category.href} className="flex flex-col items-center group">
-                <div className="w-24 h-24 md:w-32 md:h-32 rounded-full border border-primary/20 bg-white shadow-sm flex items-center justify-center mb-4 transition-all duration-300 group-hover:shadow-md group-hover:border-primary group-hover:scale-105">
-                   <category.icon className="w-10 h-10 md:w-12 md:h-12 text-primary transition-transform duration-300 group-hover:scale-110" strokeWidth={1.5} />
-                </div>
-                <h3 className="text-dark font-semibold text-sm md:text-base text-center group-hover:text-primary transition-colors">
-                  {category.name}
-                </h3>
-              </Link>
-            </StaggerItem>
-          ))}
+          {categories.map((category) => {
+            const IconComponent = getIcon(category.icon);
+            return (
+              <StaggerItem key={category.id}>
+                <Link href={`/menu#${category.id}`} className="flex flex-col items-center group">
+                  <div className="w-24 h-24 md:w-32 md:h-32 rounded-full border border-primary/20 bg-white shadow-sm flex items-center justify-center mb-4 transition-all duration-300 group-hover:shadow-md group-hover:border-primary group-hover:scale-105">
+                     <IconComponent className="w-10 h-10 md:w-12 md:h-12 text-primary transition-transform duration-300 group-hover:scale-110" strokeWidth={1.5} />
+                  </div>
+                  <h3 className="text-dark font-semibold text-sm md:text-base text-center group-hover:text-primary transition-colors">
+                    {getName(category.name)}
+                  </h3>
+                </Link>
+              </StaggerItem>
+            );
+          })}
+          
+          <StaggerItem key="menu-du-jour">
+            <Link href="/#menu-du-jour" className="flex flex-col items-center group">
+              <div className="w-24 h-24 md:w-32 md:h-32 rounded-full border border-primary/20 bg-white shadow-sm flex items-center justify-center mb-4 transition-all duration-300 group-hover:shadow-md group-hover:border-primary group-hover:scale-105">
+                 <UtensilsCrossed className="w-10 h-10 md:w-12 md:h-12 text-primary transition-transform duration-300 group-hover:scale-110" strokeWidth={1.5} />
+              </div>
+              <h3 className="text-dark font-semibold text-sm md:text-base text-center group-hover:text-primary transition-colors">
+                Menu du jour
+              </h3>
+            </Link>
+          </StaggerItem>
         </StaggerContainer>
 
       </div>
