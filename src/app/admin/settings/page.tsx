@@ -2,13 +2,16 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Save, Store, Phone, Clock, MapPin, Globe, Palette } from "lucide-react";
+import { Save, Store, Phone, Clock, MapPin, Globe, Palette, Database, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { useSettingsStore, ShopSettings } from "@/store/useSettingsStore";
+import { supabase } from "@/lib/supabase";
+import { MAMAKA_CATEGORIES, MAMAKA_PRODUCTS } from "@/lib/mamaka_data";
 
 export default function AdminSettingsPage() {
   const { settings: storeSettings, fetchSettings, updateSettings } = useSettingsStore();
   const [isSaving, setIsSaving] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
   const [localSettings, setLocalSettings] = useState<ShopSettings | null>(null);
 
   useEffect(() => {
@@ -36,6 +39,64 @@ export default function AdminSettingsPage() {
       toast.error(err.message || "Erreur lors de l'enregistrement");
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleImportMamaka = async () => {
+    const confirm = window.confirm(
+      "ATTENTION : Cette action va supprimer TOUS vos produits et catégories actuels pour importer le menu de Mamaka. Cette action est irréversible. Voulez-vous continuer ?"
+    );
+    if (!confirm) return;
+
+    setIsImporting(true);
+    toast.loading("Importation du menu Mamaka...", { id: "import-mamaka" });
+
+    try {
+      // 1. Delete existing products
+      const { error: delProductsError } = await supabase
+        .from("products")
+        .delete()
+        .neq("id", "00000000-0000-0000-0000-000000000000");
+
+      if (delProductsError) throw delProductsError;
+
+      // 2. Delete existing categories
+      const { error: delCatsError } = await supabase
+        .from("categories")
+        .delete()
+        .neq("id", "none");
+
+      if (delCatsError) throw delCatsError;
+
+      // 3. Insert Mamaka categories
+      const { error: insCatsError } = await supabase
+        .from("categories")
+        .insert(MAMAKA_CATEGORIES);
+
+      if (insCatsError) throw insCatsError;
+
+      // 4. Insert Mamaka products
+      const { error: insProductsError } = await supabase
+        .from("products")
+        .insert(MAMAKA_PRODUCTS);
+
+      if (insProductsError) throw insProductsError;
+
+      toast.success("Menu Mamaka importé avec succès ! 🎉", { id: "import-mamaka" });
+      
+      // Clear localStorage cache to force refresh
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("afnene-products-storage");
+        localStorage.removeItem("afnene_categories");
+        setTimeout(() => {
+          window.location.reload();
+        }, 1500);
+      }
+    } catch (err: any) {
+      console.error("Error importing Mamaka menu:", err);
+      toast.error(err.message || "Erreur lors de l'importation", { id: "import-mamaka" });
+    } finally {
+      setIsImporting(false);
     }
   };
 
@@ -191,6 +252,48 @@ export default function AdminSettingsPage() {
             </div>
           </motion.div>
         ))}
+
+        {/* Zone de Danger / Importation */}
+        <motion.div
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: sections.length * 0.08 }}
+          className="glass-card border-red-500/20 dark:border-red-500/30 rounded-[var(--radius-lg)] p-6 bg-red-500/5 dark:bg-red-950/10"
+        >
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-9 h-9 rounded-xl bg-red-500/10 flex items-center justify-center">
+              <AlertTriangle className="w-4 h-4 text-red-500" />
+            </div>
+            <h2 className="font-bold text-red-600 dark:text-red-400">
+              Zone de danger & Importation
+            </h2>
+          </div>
+
+          <div className="space-y-4">
+            <p className="text-sm text-muted dark:text-muted-dark">
+              Cette option vous permet d'initialiser ou de remplacer l'ensemble de votre menu par le classement de catégories et de produits de <strong>Mamaka</strong>.
+            </p>
+            <div className="flex flex-wrap gap-3">
+              <button
+                onClick={handleImportMamaka}
+                disabled={isImporting}
+                className="flex items-center gap-2 text-sm px-5 py-2.5 bg-red-500 hover:bg-red-600 active:scale-95 text-white rounded-xl disabled:opacity-60 transition-all font-semibold shadow-lg shadow-red-500/10"
+              >
+                {isImporting ? (
+                  <>
+                    <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    Importation...
+                  </>
+                ) : (
+                  <>
+                    <Database className="w-4 h-4" />
+                    Importer le menu Mamaka
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </motion.div>
       </div>
     </div>
   );
