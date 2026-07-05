@@ -14,6 +14,8 @@ import {
   Upload,
   ArrowUp,
   ArrowDown,
+  Move,
+  CornerDownLeft,
 } from "lucide-react";
 import Link from "next/link";
 import { formatPrice } from "@/lib/utils";
@@ -24,6 +26,7 @@ export default function AdminProductsPage() {
   const [search, setSearch] = useState("");
   const { products, toggleAvailability, deleteProduct, updateProduct } = useProductStore();
   const [editingProduct, setEditingProduct] = useState<StoreProduct | null>(null);
+  const [movingProductId, setMovingProductId] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -121,7 +124,22 @@ export default function AdminProductsPage() {
             className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-card dark:bg-card-dark border border-border dark:border-border-dark text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
           />
         </div>
-      </motion.div>
+      {movingProductId && (
+        <div className="mb-6 p-4 bg-primary/10 border border-primary/20 rounded-2xl flex items-center justify-between animate-pulse">
+          <div className="flex items-center gap-2">
+            <span className="text-xl">📍</span>
+            <span className="text-sm text-primary font-semibold">
+              Mode déplacement actif : Cliquez sur le bouton "Déposer ici" (icône ↩️) de la ligne de destination.
+            </span>
+          </div>
+          <button
+            onClick={() => setMovingProductId(null)}
+            className="text-xs px-3.5 py-2 rounded-xl bg-card border border-border text-muted hover:text-dark font-bold hover:shadow-sm transition-all"
+          >
+            Annuler
+          </button>
+        </div>
+      )}
 
       {/* Products Table */}
       <motion.div
@@ -211,22 +229,60 @@ export default function AdminProductsPage() {
                   </td>
                   <td className="py-3.5 px-5">
                     <div className="flex items-center justify-end gap-1.5">
-                      <button
-                        onClick={() => useProductStore.getState().updateProductOrder(product.id, "up")}
-                        disabled={index === 0}
-                        className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-primary/10 dark:hover:bg-white/10 disabled:opacity-20 transition-colors text-muted hover:text-primary dark:hover:text-secondary"
-                        title="Décaler vers le haut"
-                      >
-                        <ArrowUp className="w-3.5 h-3.5" />
-                      </button>
-                      <button
-                        onClick={() => useProductStore.getState().updateProductOrder(product.id, "down")}
-                        disabled={index === filtered.length - 1}
-                        className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-primary/10 dark:hover:bg-white/10 disabled:opacity-20 transition-colors text-muted hover:text-primary dark:hover:text-secondary"
-                        title="Décaler vers le bas"
-                      >
-                        <ArrowDown className="w-3.5 h-3.5" />
-                      </button>
+                      {movingProductId ? (
+                        movingProductId === product.id ? (
+                          <button
+                            onClick={() => setMovingProductId(null)}
+                            className="w-7 h-7 rounded-lg flex items-center justify-center bg-rose-500/10 text-rose-500 hover:bg-rose-500/25 transition-colors"
+                            title="Annuler le déplacement"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        ) : (
+                          <button
+                            onClick={async () => {
+                              const toastId = toast.loading("Déplacement...");
+                              try {
+                                await useProductStore.getState().moveProductToPosition(movingProductId, index);
+                                setMovingProductId(null);
+                                toast.success("Produit déplacé avec succès !", { id: toastId });
+                              } catch (err: any) {
+                                toast.error(`Erreur: ${err.message || err}`, { id: toastId });
+                              }
+                            }}
+                            className="w-8 h-8 rounded-lg flex items-center justify-center bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/25 border border-emerald-500/20 transition-all shadow-sm animate-pulse"
+                            title="Déposer ici"
+                          >
+                            <CornerDownLeft className="w-4 h-4" />
+                          </button>
+                        )
+                      ) : (
+                        <>
+                          <button
+                            onClick={() => setMovingProductId(product.id)}
+                            className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-primary/10 dark:hover:bg-white/10 transition-colors text-muted hover:text-primary dark:hover:text-secondary"
+                            title="Déplacer ce produit"
+                          >
+                            <Move className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            onClick={() => useProductStore.getState().updateProductOrder(product.id, "up")}
+                            disabled={index === 0}
+                            className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-primary/10 dark:hover:bg-white/10 disabled:opacity-20 transition-colors text-muted hover:text-primary dark:hover:text-secondary"
+                            title="Décaler vers le haut"
+                          >
+                            <ArrowUp className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            onClick={() => useProductStore.getState().updateProductOrder(product.id, "down")}
+                            disabled={index === filtered.length - 1}
+                            className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-primary/10 dark:hover:bg-white/10 disabled:opacity-20 transition-colors text-muted hover:text-primary dark:hover:text-secondary"
+                            title="Décaler vers le bas"
+                          >
+                            <ArrowDown className="w-3.5 h-3.5" />
+                          </button>
+                        </>
+                      )}
 
                       <button
                         onClick={() => handleToggle(product.id, product.name, product.available)}

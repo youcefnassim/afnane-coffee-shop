@@ -152,6 +152,7 @@ interface ProductState {
   toggleAvailability: (id: string) => Promise<void>;
   resetToDefaultMenu: () => Promise<void>;
   updateProductOrder: (id: string, direction: "up" | "down") => Promise<void>;
+  moveProductToPosition: (id: string, targetIndex: number) => Promise<void>;
 }
 
 const isSupabaseConfigured = () => {
@@ -367,6 +368,38 @@ export const useProductStore = create<ProductState>()(
             ]);
           } catch (err) {
             console.error("Failed to update product order in Supabase:", err);
+          }
+        }
+      },
+
+      moveProductToPosition: async (id, targetIndex) => {
+        const currentProducts = [...get().products];
+        const index = currentProducts.findIndex((p) => p.id === id);
+        if (index === -1) return;
+
+        // Remove the product from its current place
+        const [movedProduct] = currentProducts.splice(index, 1);
+        // Insert at target index
+        currentProducts.splice(targetIndex, 0, movedProduct);
+
+        // Re-assign absolute sequential positions
+        const updated = currentProducts.map((p, idx) => ({
+          ...p,
+          sort_order: idx + 1,
+        }));
+
+        set({ products: updated });
+
+        if (isSupabaseConfigured()) {
+          try {
+            // Bulk update sort orders in database
+            await Promise.all(
+              updated.map((p) =>
+                supabase.from("products").update({ sort_order: p.sort_order }).eq("id", p.id)
+              )
+            );
+          } catch (err) {
+            console.error("Failed to save new order sequence in Supabase:", err);
           }
         }
       },
