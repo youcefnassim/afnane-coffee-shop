@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import {
   Package,
@@ -12,51 +13,6 @@ import {
   ArrowUpRight,
 } from "lucide-react";
 import Link from "next/link";
-
-const STATS = [
-  {
-    label: "Total Products",
-    value: "18",
-    change: "+3 this week",
-    icon: Package,
-    color: "bg-primary/10 text-primary dark:text-secondary",
-    href: "/admin/products",
-  },
-  {
-    label: "Categories",
-    value: "9",
-    change: "All active",
-    icon: FolderOpen,
-    color: "bg-secondary/10 text-secondary",
-    href: "/admin/categories",
-  },
-  {
-    label: "Active Promotions",
-    value: "4",
-    change: "2 ending soon",
-    icon: Tag,
-    color: "bg-accent/10 text-accent",
-    href: "/admin/promotions",
-  },
-  {
-    label: "Today's Visitors",
-    value: "127",
-    change: "+12% vs yesterday",
-    icon: Users,
-    color: "bg-green-500/10 text-green-600 dark:text-green-400",
-    href: "/admin",
-  },
-];
-
-const RECENT_PRODUCTS = [
-  { name: "Signature Espresso", category: "Coffee", price: "250 DA", status: "Available" },
-  { name: "Classic Burger", category: "Burgers", price: "850 DA", status: "Available" },
-  { name: "Iced Caramel Latte", category: "Cold Drinks", price: "500 DA", status: "Available" },
-  { name: "Tiramisu", category: "Desserts", price: "600 DA", status: "Available" },
-  { name: "Chicken Nuggets", category: "Snacks", price: "450 DA", status: "Unavailable" },
-];
-
-import { useEffect, useState } from "react";
 import { useProductStore } from "@/store/useProductStore";
 
 const QUICK_ACTIONS = [
