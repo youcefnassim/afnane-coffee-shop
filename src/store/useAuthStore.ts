@@ -12,7 +12,7 @@ interface AuthState {
 
 const isSupabaseConfigured = () => {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  return !!(url && !url.includes("your-project") && url.trim().length > 0);
+  return !!(url && !url.includes("your-project") && !url.includes("placeholder-project") && url.trim().length > 0);
 };
 
 export const useAuthStore = create<AuthState>()(
