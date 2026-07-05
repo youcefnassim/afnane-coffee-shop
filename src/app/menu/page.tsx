@@ -70,6 +70,15 @@ export default function MenuPage() {
       });
   }, []);
 
+  useEffect(() => {
+    if (typeof window !== "undefined" && window.location.hash) {
+      const hash = decodeURIComponent(window.location.hash.replace("#", ""));
+      if (hash && categories.some((c) => c.id === hash)) {
+        setActiveCategory(hash);
+      }
+    }
+  }, [categories]);
+
   const toggleFilter = (filter: FilterType) => {
     setActiveFilters((prev) =>
       prev.includes(filter) ? prev.filter((f) => f !== filter) : [...prev, filter]
