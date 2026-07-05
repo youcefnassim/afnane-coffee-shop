@@ -51,11 +51,15 @@ export default function MenuPage() {
 
   useEffect(() => {
     setMounted(true);
-    supabase
-      .from("categories")
-      .select("id, name, icon")
-      .order("sort_order", { ascending: true })
-      .then(({ data }) => {
+    async function loadCategories() {
+      try {
+        const { data, error } = await supabase
+          .from("categories")
+          .select("id, name, icon")
+          .order("sort_order", { ascending: true });
+
+        if (error) throw error;
+
         if (data && data.length > 0) {
           const mapped = data.map((c: any) => ({
             id: c.id,
@@ -64,10 +68,11 @@ export default function MenuPage() {
           }));
           setCategories([{ id: "all", name: "Tous", icon: "🍽️" }, ...mapped]);
         }
-      })
-      .catch((err) => {
+      } catch (err) {
         console.error("Error loading categories dynamically:", err);
-      });
+      }
+    }
+    loadCategories();
   }, []);
 
   useEffect(() => {
