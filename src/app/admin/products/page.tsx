@@ -124,6 +124,8 @@ export default function AdminProductsPage() {
             className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-card dark:bg-card-dark border border-border dark:border-border-dark text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
           />
         </div>
+      </motion.div>
+
       {movingProductId && (
         <div className="mb-6 p-4 bg-primary/10 border border-primary/20 rounded-2xl flex items-center justify-between animate-pulse">
           <div className="flex items-center gap-2">
