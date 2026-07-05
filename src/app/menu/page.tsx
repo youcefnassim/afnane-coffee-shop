@@ -22,7 +22,9 @@ import { useCartStore } from "@/store/useCartStore";
 import { useProductStore, StoreProduct } from "@/store/useProductStore";
 import { Product } from "@/types/database";
 
-const DEMO_CATEGORIES = [
+import { supabase } from "@/lib/supabase";
+
+const FALLBACK_CATEGORIES = [
   { id: "all", name: "Tous", icon: "🍽️" },
   { id: "coffee", name: "Café", icon: "☕" },
   { id: "cold-drinks", name: "Boissons froides", icon: "🧊" },
@@ -36,6 +38,7 @@ const DEMO_CATEGORIES = [
 type FilterType = "available" | "promotions" | "best_sellers";
 
 export default function MenuPage() {
+  const [categories, setCategories] = useState<{ id: string; name: string; icon: string }[]>(FALLBACK_CATEGORIES);
   const [activeCategory, setActiveCategory] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [activeFilters, setActiveFilters] = useState<FilterType[]>([]);
@@ -48,6 +51,23 @@ export default function MenuPage() {
 
   useEffect(() => {
     setMounted(true);
+    supabase
+      .from("categories")
+      .select("id, name, icon")
+      .order("sort_order", { ascending: true })
+      .then(({ data }) => {
+        if (data && data.length > 0) {
+          const mapped = data.map((c: any) => ({
+            id: c.id,
+            name: typeof c.name === "object" ? (c.name?.fr || c.name?.en || c.id) : c.name || c.id,
+            icon: c.icon || "🍿",
+          }));
+          setCategories([{ id: "all", name: "Tous", icon: "🍽️" }, ...mapped]);
+        }
+      })
+      .catch((err) => {
+        console.error("Error loading categories dynamically:", err);
+      });
   }, []);
 
   const toggleFilter = (filter: FilterType) => {
@@ -191,7 +211,7 @@ export default function MenuPage() {
           {/* Categories Horizontal Tabs */}
           <AnimationWrapper type="fade" direction="up" delay={0.15}>
             <div className="flex gap-2 overflow-x-auto pb-4 mb-10 hide-scrollbar">
-              {DEMO_CATEGORIES.map((c) => (
+              {categories.map((c) => (
                 <button
                   key={c.id}
                   onClick={() => setActiveCategory(c.id)}
@@ -281,8 +301,8 @@ export default function MenuPage() {
                       {/* Card Body */}
                       <div className="p-5 pb-3">
                         <div className="flex items-center justify-between gap-2 mb-1.5">
-                          <span className="text-[10px] font-bold uppercase tracking-wider text-secondary capitalize">
-                            {product.category_id}
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-secondary capitalize font-semibold">
+                            {categories.find((c) => c.id === product.category_id)?.name || product.category_id}
                           </span>
                           {product.calories && (
                             <span className="text-[11px] text-muted flex items-center gap-0.5">
