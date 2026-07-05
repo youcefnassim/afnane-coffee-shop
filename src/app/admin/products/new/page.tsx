@@ -38,14 +38,34 @@ export default function NewProductPage() {
             setCategory(mapped[0].id);
           }
         } else {
-          const mapped = MAMAKA_CATEGORIES.map((c) => ({ id: c.id, name: c.name.fr }));
+          const mapped = [
+            { id: "coffee", name: "Café" },
+            { id: "breakfast", name: "Petit Déjeuner" },
+            { id: "cold-drinks", name: "Boissons froides" },
+            { id: "sandwiches", name: "Sandwichs" },
+            { id: "burgers", name: "Burgers" },
+            { id: "pizza", name: "Pizza" },
+            { id: "desserts", name: "Desserts" },
+            { id: "salads", name: "Salades" },
+            { id: "snacks-sales", name: "Snacks" },
+          ];
           setCategories(mapped);
           if (mapped.length > 0) {
             setCategory(mapped[0].id);
           }
         }
       } catch (e) {
-        const mapped = MAMAKA_CATEGORIES.map((c) => ({ id: c.id, name: c.name.fr }));
+        const mapped = [
+          { id: "coffee", name: "Café" },
+          { id: "breakfast", name: "Petit Déjeuner" },
+          { id: "cold-drinks", name: "Boissons froides" },
+          { id: "sandwiches", name: "Sandwichs" },
+          { id: "burgers", name: "Burgers" },
+          { id: "pizza", name: "Pizza" },
+          { id: "desserts", name: "Desserts" },
+          { id: "salads", name: "Salades" },
+          { id: "snacks-sales", name: "Snacks" },
+        ];
         setCategories(mapped);
         if (mapped.length > 0) {
           setCategory(mapped[0].id);

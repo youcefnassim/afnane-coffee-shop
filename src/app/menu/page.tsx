@@ -26,20 +26,15 @@ import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 
 const FALLBACK_CATEGORIES = [
   { id: "all", name: "Tous", icon: "🍽️" },
-  { id: "pizza-sandwich", name: "Pizza & Sandwich", icon: "🍕" },
-  { id: "sucre", name: "Sucré", icon: "🍰" },
-  { id: "sale", name: "Salé", icon: "🍔" },
-  { id: "salades", name: "Salades", icon: "🥗" },
-  { id: "cafe", name: "Café", icon: "☕" },
-  { id: "matcha", name: "Matcha", icon: "🍵" },
-  { id: "ube", name: "Ubé", icon: "🍠" },
-  { id: "milkshakes", name: "Milkshakes", icon: "🥤" },
-  { id: "smoothies-bowls", name: "Smoothies & Bowls", icon: "🥑" },
-  { id: "frappes", name: "Frappés", icon: "🧊" },
-  { id: "toasts", name: "Toasts", icon: "🍞" },
-  { id: "omelettes", name: "Omelettes", icon: "🍳" },
-  { id: "mocktails", name: "Mocktails", icon: "🍹" },
-  { id: "jus-presses", name: "Jus Pressés & Détox", icon: "🍊" }
+  { id: "coffee", name: "Café", icon: "☕" },
+  { id: "breakfast", name: "Petit Déjeuner", icon: "🥐" },
+  { id: "cold-drinks", name: "Boissons froides", icon: "🧊" },
+  { id: "sandwiches", name: "Sandwichs", icon: "🥪" },
+  { id: "burgers", name: "Burgers", icon: "🍔" },
+  { id: "pizza", name: "Pizza", icon: "🍕" },
+  { id: "desserts", name: "Desserts", icon: "🍰" },
+  { id: "salads", name: "Salades", icon: "🥗" },
+  { id: "snacks-sales", name: "Snacks", icon: "🍿" },
 ];
 
 type FilterType = "available" | "promotions" | "best_sellers";

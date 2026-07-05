@@ -32,7 +32,7 @@ const DEFAULT_CATEGORIES: AdminCategory[] = [
   { id: "pizza", name: "Pizza", icon: "🍕", itemCount: 0, status: "Active" },
   { id: "desserts", name: "Desserts", icon: "🍰", itemCount: 0, status: "Active" },
   { id: "salads", name: "Salades", icon: "🥗", itemCount: 0, status: "Active" },
-  { id: "snacks", name: "Snacks", icon: "🍿", itemCount: 0, status: "Active" },
+  { id: "snacks-sales", name: "Snacks", icon: "🍿", itemCount: 0, status: "Active" },
 ];
 
 export default function AdminCategoriesPage() {

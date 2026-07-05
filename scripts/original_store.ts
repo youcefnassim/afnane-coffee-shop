@@ -117,12 +117,12 @@ const INITIAL_PRODUCTS: StoreProduct[] = [
   { id: "76", category_id: "desserts", name: "Trompe-l'oeil Café", description: "Dessert en trompe-l'œil en forme de grain de café géant.", price: 500, media_type: "image", media_url: "/logo.jpg", available: true, best_seller: false, featured: false, promotion: false, ingredients: "Mousse café intense Arabica, ganache" },
 
   // ==================== SALTY ====================
-  { id: "77", category_id: "snacks-sales", name: "Batbout", description: "Pain batbout farci de viande marinée et crudités.", price: 150, media_type: "image", media_url: "/logo.jpg", available: true, best_seller: false, featured: false, promotion: false, ingredients: "Pain marocain farci, poulet mariné, salade" },
-  { id: "78", category_id: "snacks-sales", name: "Mini Pizza", description: "Mini pizza garnie de sauce tomate, fromage et olive.", price: 150, media_type: "image", media_url: "/logo.jpg", available: true, best_seller: false, featured: false, promotion: false, ingredients: "Tomate, mozzarella, olives" },
-  { id: "79", category_id: "snacks-sales", name: "Pizza Carrée", description: "Pizza carrée traditionnelle garnie.", price: 150, media_type: "image", media_url: "/logo.jpg", available: true, best_seller: false, featured: false, promotion: false, ingredients: "Pâte à pizza, sauce tomate maison, fromage" },
-  { id: "80", category_id: "snacks-sales", name: "Taco", description: "Taco croustillant garni de poulet et de sauces.", price: 150, media_type: "image", media_url: "/logo.jpg", available: true, best_seller: false, featured: false, promotion: false, ingredients: "Tortilla de blé, viande, frites, sauce fromage" },
-  { id: "81", category_id: "snacks-sales", name: "Mini Burger", description: "Bouchée gourmande au bœuf et cheddar fondu.", price: 200, media_type: "image", media_url: "/logo.jpg", available: true, best_seller: false, featured: false, promotion: false, ingredients: "Mini pain burger, steak, cheddar" },
-  { id: "82", category_id: "snacks-sales", name: "Quiche", description: "Quiche salée traditionnelle croustillante.", price: 200, media_type: "image", media_url: "/logo.jpg", available: true, best_seller: false, featured: false, promotion: false, ingredients: "Crème, œufs, fromage râpé, pâte brisée" },
+  { id: "77", category_id: "snacks", name: "Batbout", description: "Pain batbout farci de viande marinée et crudités.", price: 150, media_type: "image", media_url: "/logo.jpg", available: true, best_seller: false, featured: false, promotion: false, ingredients: "Pain marocain farci, poulet mariné, salade" },
+  { id: "78", category_id: "snacks", name: "Mini Pizza", description: "Mini pizza garnie de sauce tomate, fromage et olive.", price: 150, media_type: "image", media_url: "/logo.jpg", available: true, best_seller: false, featured: false, promotion: false, ingredients: "Tomate, mozzarella, olives" },
+  { id: "79", category_id: "snacks", name: "Pizza Carrée", description: "Pizza carrée traditionnelle garnie.", price: 150, media_type: "image", media_url: "/logo.jpg", available: true, best_seller: false, featured: false, promotion: false, ingredients: "Pâte à pizza, sauce tomate maison, fromage" },
+  { id: "80", category_id: "snacks", name: "Taco", description: "Taco croustillant garni de poulet et de sauces.", price: 150, media_type: "image", media_url: "/logo.jpg", available: true, best_seller: false, featured: false, promotion: false, ingredients: "Tortilla de blé, viande, frites, sauce fromage" },
+  { id: "81", category_id: "snacks", name: "Mini Burger", description: "Bouchée gourmande au bœuf et cheddar fondu.", price: 200, media_type: "image", media_url: "/logo.jpg", available: true, best_seller: false, featured: false, promotion: false, ingredients: "Mini pain burger, steak, cheddar" },
+  { id: "82", category_id: "snacks", name: "Quiche", description: "Quiche salée traditionnelle croustillante.", price: 200, media_type: "image", media_url: "/logo.jpg", available: true, best_seller: false, featured: false, promotion: false, ingredients: "Crème, œufs, fromage râpé, pâte brisée" },
   { id: "83", category_id: "sandwiches", name: "Sandwich Poulet", description: "Pain ciabatta garni de poulet grillé et de sauces.", price: 350, media_type: "image", media_url: "/logo.jpg", available: true, best_seller: false, featured: false, promotion: false, ingredients: "Pain spécial, escalope de poulet, sauces au choix" },
 
   // ==================== OMELETTES ====================
@@ -423,7 +423,7 @@ export const useProductStore = create<ProductState>()(
             { id: "pizza", name: { fr: "Pizza", en: "Pizza", ar: "بيتزا" }, icon: "🍕", sort_order: 6 },
             { id: "desserts", name: { fr: "Desserts & Sucrés", en: "Desserts & Sweets", ar: "حلويات" }, icon: "🍰", sort_order: 7 },
             { id: "salads", name: { fr: "Salades", en: "Salades", ar: "سلطات" }, icon: "🥗", sort_order: 8 },
-            { id: "snacks-sales", name: { fr: "Snacks & Salés", en: "Snacks & Salty", ar: "مقبلات ومملحات" }, icon: "🍿", sort_order: 9 },
+            { id: "snacks", name: { fr: "Snacks & Salés", en: "Snacks & Salty", ar: "مقبلات ومملحات" }, icon: "🍿", sort_order: 9 },
           ];
 
           const { error: catError } = await supabase

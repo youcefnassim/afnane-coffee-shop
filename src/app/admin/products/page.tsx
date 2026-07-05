@@ -44,10 +44,30 @@ export default function AdminProductsPage() {
           const parsed = JSON.parse(local);
           setCategories(parsed.map((c: any) => ({ id: c.id, name: typeof c.name === "object" ? (c.name?.fr || c.name?.en || c.id) : c.name || c.id })));
         } else {
-          setCategories(MAMAKA_CATEGORIES.map((c) => ({ id: c.id, name: c.name.fr })));
+          setCategories([
+            { id: "coffee", name: "Café" },
+            { id: "breakfast", name: "Petit Déjeuner" },
+            { id: "cold-drinks", name: "Boissons froides" },
+            { id: "sandwiches", name: "Sandwichs" },
+            { id: "burgers", name: "Burgers" },
+            { id: "pizza", name: "Pizza" },
+            { id: "desserts", name: "Desserts" },
+            { id: "salads", name: "Salades" },
+            { id: "snacks-sales", name: "Snacks" },
+          ]);
         }
       } catch (e) {
-        setCategories(MAMAKA_CATEGORIES.map((c) => ({ id: c.id, name: c.name.fr })));
+        setCategories([
+          { id: "coffee", name: "Café" },
+          { id: "breakfast", name: "Petit Déjeuner" },
+          { id: "cold-drinks", name: "Boissons froides" },
+          { id: "sandwiches", name: "Sandwichs" },
+          { id: "burgers", name: "Burgers" },
+          { id: "pizza", name: "Pizza" },
+          { id: "desserts", name: "Desserts" },
+          { id: "salads", name: "Salades" },
+          { id: "snacks-sales", name: "Snacks" },
+        ]);
       }
       return;
     }

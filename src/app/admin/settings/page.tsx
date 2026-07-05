@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { Save, Store, Phone, Clock, MapPin, Globe, Palette, Database, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { useSettingsStore, ShopSettings } from "@/store/useSettingsStore";
+import { useProductStore } from "@/store/useProductStore";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 import { MAMAKA_CATEGORIES, MAMAKA_PRODUCTS } from "@/lib/afnene_data";
 
@@ -12,6 +13,7 @@ export default function AdminSettingsPage() {
   const { settings: storeSettings, fetchSettings, updateSettings } = useSettingsStore();
   const [isSaving, setIsSaving] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
+  const [isRestoring, setIsRestoring] = useState(false);
   const [localSettings, setLocalSettings] = useState<ShopSettings | null>(null);
 
   useEffect(() => {
@@ -144,6 +146,35 @@ export default function AdminSettingsPage() {
       toast.error(err.message || "Erreur lors de l'importation", { id: "import-mamaka" });
     } finally {
       setIsImporting(false);
+    }
+  };
+
+  const handleRestoreOriginal = async () => {
+    const confirm = window.confirm(
+      "ATTENTION : Cette action va réinitialiser l'ensemble de votre menu vers les produits et catégories d'origine de la boutique. Continuer ?"
+    );
+    if (!confirm) return;
+
+    setIsRestoring(true);
+    toast.loading("Réinitialisation vers le menu d'origine...", { id: "restore-original" });
+
+    try {
+      const { resetToDefaultMenu } = useProductStore.getState();
+      await resetToDefaultMenu();
+
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("afnene-products-storage");
+        localStorage.removeItem("afnene_categories");
+        setTimeout(() => {
+          window.location.reload();
+        }, 1500);
+      }
+      toast.success("Menu d'origine restauré avec succès ! 🎉", { id: "restore-original" });
+    } catch (err: any) {
+      console.error("Error restoring original menu:", err);
+      toast.error(err.message || "Erreur lors de la réinitialisation", { id: "restore-original" });
+    } finally {
+      setIsRestoring(false);
     }
   };
 
@@ -335,6 +366,23 @@ export default function AdminSettingsPage() {
                   <>
                     <Database className="w-4 h-4" />
                     Importer le menu Mamaka
+                  </>
+                )}
+              </button>
+              <button
+                onClick={handleRestoreOriginal}
+                disabled={isRestoring || isImporting}
+                className="flex items-center gap-2 text-sm px-5 py-2.5 bg-slate-600 hover:bg-slate-700 active:scale-95 text-white rounded-xl disabled:opacity-60 transition-all font-semibold shadow-lg shadow-slate-500/10"
+              >
+                {isRestoring ? (
+                  <>
+                    <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    Restauration...
+                  </>
+                ) : (
+                  <>
+                    <Database className="w-4 h-4" />
+                    Restaurer le menu original
                   </>
                 )}
               </button>

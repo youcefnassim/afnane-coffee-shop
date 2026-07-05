@@ -40,7 +40,7 @@ export function CategoriesGrid() {
         { id: "pizza", name: { fr: "Pizza" }, icon: "🍕" },
         { id: "desserts", name: { fr: "Desserts" }, icon: "🍰" },
         { id: "salads", name: { fr: "Salades" }, icon: "🥗" },
-        { id: "snacks", name: { fr: "Snacks" }, icon: "🍿" },
+        { id: "snacks-sales", name: { fr: "Snacks" }, icon: "🍿" },
       ];
 
       try {
