@@ -27,6 +27,8 @@ export default function AdminProductsPage() {
   const { products, toggleAvailability, deleteProduct, updateProduct } = useProductStore();
   const [editingProduct, setEditingProduct] = useState<StoreProduct | null>(null);
   const [mounted, setMounted] = useState(false);
+  const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string>("all");
 
   // Drag and drop states
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
@@ -34,12 +36,26 @@ export default function AdminProductsPage() {
 
   useEffect(() => {
     setMounted(true);
+    supabase
+      .from("categories")
+      .select("id, name")
+      .order("sort_order", { ascending: true })
+      .then(({ data }) => {
+        if (data) {
+          const mapped = data.map((c: any) => ({
+            id: c.id,
+            name: typeof c.name === "object" ? (c.name?.fr || c.name?.en || c.id) : c.name || c.id,
+          }));
+          setCategories(mapped);
+        }
+      });
   }, []);
 
   const filtered = products.filter(
     (p) =>
-      p.name.toLowerCase().includes(search.toLowerCase()) ||
-      p.category_id.toLowerCase().includes(search.toLowerCase())
+      (selectedCategoryId === "all" || p.category_id === selectedCategoryId) &&
+      (p.name.toLowerCase().includes(search.toLowerCase()) ||
+        p.category_id.toLowerCase().includes(search.toLowerCase()))
   );
 
   const handleDragStart = (e: React.DragEvent, index: number) => {
@@ -184,7 +200,40 @@ export default function AdminProductsPage() {
         </div>
       </motion.div>
 
-
+      {/* Category Filter Tabs */}
+      <div className="flex gap-2 overflow-x-auto pb-4 mb-6 scrollbar-hide">
+        <button
+          onClick={() => setSelectedCategoryId("all")}
+          className={`px-4 py-2.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all duration-300 border ${
+            selectedCategoryId === "all"
+              ? "bg-[#D6B370] text-white border-[#D6B370]"
+              : "bg-card dark:bg-card-dark text-muted dark:text-muted-dark border-border dark:border-border-dark hover:border-[#D6B370]/50"
+          }`}
+        >
+          Tous les produits ({products.length})
+        </button>
+        {categories.map((cat) => {
+          const count = products.filter((p) => p.category_id === cat.id).length;
+          return (
+            <button
+              key={cat.id}
+              onClick={() => setSelectedCategoryId(cat.id)}
+              className={`px-4 py-2.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all duration-300 border flex items-center gap-2 ${
+                selectedCategoryId === cat.id
+                  ? "bg-[#D6B370] text-white border-[#D6B370]"
+                  : "bg-card dark:bg-card-dark text-muted dark:text-muted-dark border-border dark:border-border-dark hover:border-[#D6B370]/50"
+              }`}
+            >
+              {cat.name}
+              <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
+                selectedCategoryId === cat.id ? "bg-white/20 text-white" : "bg-primary/10 text-primary dark:text-[#D6B370] dark:bg-white/5"
+              }`}>
+                {count}
+              </span>
+            </button>
+          );
+        })}
+      </div>
 
       {/* Products Table */}
       <motion.div
