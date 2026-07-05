@@ -13,7 +13,7 @@ import {
   ArrowDown,
 } from "lucide-react";
 import { toast } from "sonner";
-import { supabase } from "@/lib/supabase";
+import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 
 interface AdminCategory {
   id: string;
@@ -22,6 +22,18 @@ interface AdminCategory {
   itemCount: number;
   status: "Active" | "Inactive";
 }
+
+const DEFAULT_CATEGORIES: AdminCategory[] = [
+  { id: "coffee", name: "Café", icon: "☕", itemCount: 0, status: "Active" },
+  { id: "cold-drinks", name: "Boissons froides", icon: "🧊", itemCount: 0, status: "Active" },
+  { id: "breakfast", name: "Petit déjeuner", icon: "🥐", itemCount: 0, status: "Active" },
+  { id: "burgers", name: "Burgers", icon: "🍔", itemCount: 0, status: "Active" },
+  { id: "sandwiches", name: "Sandwichs", icon: "🥪", itemCount: 0, status: "Active" },
+  { id: "pizza", name: "Pizza", icon: "🍕", itemCount: 0, status: "Active" },
+  { id: "desserts", name: "Desserts", icon: "🍰", itemCount: 0, status: "Active" },
+  { id: "salads", name: "Salades", icon: "🥗", itemCount: 0, status: "Active" },
+  { id: "snacks", name: "Snacks", icon: "🍿", itemCount: 0, status: "Active" },
+];
 
 export default function AdminCategoriesPage() {
   const [search, setSearch] = useState("");
@@ -40,8 +52,24 @@ export default function AdminCategoriesPage() {
   }, []);
 
   const loadCategoriesData = async () => {
+    setIsLoading(true);
+    if (!isSupabaseConfigured()) {
+      try {
+        const local = localStorage.getItem("afnene_categories");
+        if (local) {
+          setCategories(JSON.parse(local));
+        } else {
+          setCategories(DEFAULT_CATEGORIES);
+        }
+      } catch (e) {
+        setCategories(DEFAULT_CATEGORIES);
+      } finally {
+        setIsLoading(false);
+      }
+      return;
+    }
+
     try {
-      setIsLoading(true);
       const { data: cats, error: catError } = await supabase
         .from("categories")
         .select("*")
@@ -96,6 +124,12 @@ export default function AdminCategoriesPage() {
 
     setCategories(newCategories);
 
+    if (!isSupabaseConfigured()) {
+      localStorage.setItem("afnene_categories", JSON.stringify(newCategories));
+      toast.success("Ordre des catégories mis à jour !");
+      return;
+    }
+
     const promises = newCategories.map((c, i) =>
       supabase
         .from("categories")
@@ -131,6 +165,14 @@ export default function AdminCategoriesPage() {
 
   const handleDelete = async (id: string, catName: string) => {
     if (confirm(`Voulez-vous vraiment supprimer la catégorie "${catName}" ?`)) {
+      if (!isSupabaseConfigured()) {
+        const newCats = categories.filter((c) => c.id !== id);
+        setCategories(newCats);
+        localStorage.setItem("afnene_categories", JSON.stringify(newCats));
+        toast.success(`Catégorie "${catName}" supprimée avec succès`);
+        return;
+      }
+
       const toastId = toast.loading("Suppression...");
       try {
         const { error } = await supabase
@@ -153,6 +195,38 @@ export default function AdminCategoriesPage() {
     if (!name.trim()) return;
 
     const toastId = toast.loading("Enregistrement...");
+
+    if (!isSupabaseConfigured()) {
+      if (editingCategory) {
+        const newCats = categories.map((c) =>
+          c.id === editingCategory.id ? { ...c, name, icon } : c
+        );
+        setCategories(newCats);
+        localStorage.setItem("afnene_categories", JSON.stringify(newCats));
+        toast.success(`Catégorie "${name}" mise à jour !`, { id: toastId });
+      } else {
+        const newId = name.toLowerCase().trim()
+          .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+          .replace(/[^a-z0-9]+/g, "-");
+        
+        const newCats = [
+          ...categories,
+          {
+            id: newId,
+            name,
+            icon,
+            itemCount: 0,
+            status: "Active" as const,
+          },
+        ];
+        setCategories(newCats);
+        localStorage.setItem("afnene_categories", JSON.stringify(newCats));
+        toast.success(`Catégorie "${name}" créée avec succès !`, { id: toastId });
+      }
+      setModalOpen(false);
+      return;
+    }
+
     try {
       if (editingCategory) {
         const { error } = await supabase

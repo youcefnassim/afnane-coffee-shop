@@ -22,17 +22,24 @@ import { useCartStore } from "@/store/useCartStore";
 import { useProductStore, StoreProduct } from "@/store/useProductStore";
 import { Product } from "@/types/database";
 
-import { supabase } from "@/lib/supabase";
+import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 
 const FALLBACK_CATEGORIES = [
   { id: "all", name: "Tous", icon: "🍽️" },
-  { id: "coffee", name: "Café", icon: "☕" },
-  { id: "cold-drinks", name: "Boissons froides", icon: "🧊" },
-  { id: "burgers", name: "Burgers", icon: "🍔" },
-  { id: "pizza", name: "Pizza", icon: "🍕" },
-  { id: "desserts", name: "Desserts", icon: "🍰" },
-  { id: "salads", name: "Salades", icon: "🥗" },
-  { id: "snacks", name: "Snacks", icon: "🍿" },
+  { id: "pizza-sandwich", name: "Pizza & Sandwich", icon: "🍕" },
+  { id: "sucre", name: "Sucré", icon: "🍰" },
+  { id: "sale", name: "Salé", icon: "🍔" },
+  { id: "salades", name: "Salades", icon: "🥗" },
+  { id: "cafe", name: "Café", icon: "☕" },
+  { id: "matcha", name: "Matcha", icon: "🍵" },
+  { id: "ube", name: "Ubé", icon: "🍠" },
+  { id: "milkshakes", name: "Milkshakes", icon: "🥤" },
+  { id: "smoothies-bowls", name: "Smoothies & Bowls", icon: "🥑" },
+  { id: "frappes", name: "Frappés", icon: "🧊" },
+  { id: "toasts", name: "Toasts", icon: "🍞" },
+  { id: "omelettes", name: "Omelettes", icon: "🍳" },
+  { id: "mocktails", name: "Mocktails", icon: "🍹" },
+  { id: "jus-presses", name: "Jus Pressés & Détox", icon: "🍊" }
 ];
 
 type FilterType = "available" | "promotions" | "best_sellers";
@@ -52,6 +59,11 @@ export default function MenuPage() {
   useEffect(() => {
     setMounted(true);
     async function loadCategories() {
+      if (!isSupabaseConfigured()) {
+        setCategories(FALLBACK_CATEGORIES);
+        return;
+      }
+
       try {
         const { data, error } = await supabase
           .from("categories")
@@ -69,7 +81,8 @@ export default function MenuPage() {
           setCategories([{ id: "all", name: "Tous", icon: "🍽️" }, ...mapped]);
         }
       } catch (err) {
-        console.error("Error loading categories dynamically:", err);
+        console.error("Error loading categories dynamically, using fallbacks:", err);
+        setCategories(FALLBACK_CATEGORIES);
       }
     }
     loadCategories();

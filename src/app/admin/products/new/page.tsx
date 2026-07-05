@@ -6,7 +6,8 @@ import { ArrowLeft, Video, Image as ImageIcon, Upload } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
 import { useProductStore } from "@/store/useProductStore";
-import { supabase } from "@/lib/supabase";
+import { supabase, isSupabaseConfigured } from "@/lib/supabase";
+import { MAMAKA_CATEGORIES } from "@/lib/afnene_data";
 
 export default function NewProductPage() {
   const router = useRouter();
@@ -26,6 +27,33 @@ export default function NewProductPage() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   useEffect(() => {
+    if (!isSupabaseConfigured()) {
+      try {
+        const local = localStorage.getItem("afnene_categories");
+        if (local) {
+          const parsed = JSON.parse(local);
+          const mapped = parsed.map((c: any) => ({ id: c.id, name: typeof c.name === "object" ? (c.name?.fr || c.name?.en || c.id) : c.name || c.id }));
+          setCategories(mapped);
+          if (mapped.length > 0) {
+            setCategory(mapped[0].id);
+          }
+        } else {
+          const mapped = MAMAKA_CATEGORIES.map((c) => ({ id: c.id, name: c.name.fr }));
+          setCategories(mapped);
+          if (mapped.length > 0) {
+            setCategory(mapped[0].id);
+          }
+        }
+      } catch (e) {
+        const mapped = MAMAKA_CATEGORIES.map((c) => ({ id: c.id, name: c.name.fr }));
+        setCategories(mapped);
+        if (mapped.length > 0) {
+          setCategory(mapped[0].id);
+        }
+      }
+      return;
+    }
+
     supabase
       .from("categories")
       .select("id, name")
@@ -172,11 +200,10 @@ export default function NewProductPage() {
               <button
                 type="button"
                 onClick={() => setMediaType("image")}
-                className={`py-2 px-3 rounded-xl border flex items-center justify-center gap-2 text-xs font-semibold transition-colors ${
-                  mediaType === "image"
+                className={`py-2 px-3 rounded-xl border flex items-center justify-center gap-2 text-xs font-semibold transition-colors ${mediaType === "image"
                     ? "border-primary bg-primary/10 text-primary"
                     : "border-border/60 text-muted"
-                }`}
+                  }`}
               >
                 <ImageIcon className="w-4 h-4" />
                 Photo
@@ -184,11 +211,10 @@ export default function NewProductPage() {
               <button
                 type="button"
                 onClick={() => setMediaType("video")}
-                className={`py-2 px-3 rounded-xl border flex items-center justify-center gap-2 text-xs font-semibold transition-colors ${
-                  mediaType === "video"
+                className={`py-2 px-3 rounded-xl border flex items-center justify-center gap-2 text-xs font-semibold transition-colors ${mediaType === "video"
                     ? "border-primary bg-primary/10 text-primary"
                     : "border-border/60 text-muted"
-                }`}
+                  }`}
               >
                 <Video className="w-4 h-4" />
                 Vidéo Présentative

@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import { Coffee, CupSoda, Croissant, Ham, Sandwich, Pizza, CakeSlice, Salad, Popcorn, UtensilsCrossed } from "lucide-react";
 import Link from "next/link";
 import { StaggerContainer, StaggerItem, AnimationWrapper } from "@/components/shared/AnimationWrapper";
-import { supabase } from "@/lib/supabase";
+import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 
 const ICON_MAP: Record<string, any> = {
   "☕": Coffee,
@@ -31,7 +31,24 @@ export function CategoriesGrid() {
 
   useEffect(() => {
     async function loadCategories() {
+      const fallbackCats = [
+        { id: "coffee", name: { fr: "Café" }, icon: "☕" },
+        { id: "cold-drinks", name: { fr: "Boissons froides" }, icon: "🧊" },
+        { id: "breakfast", name: { fr: "Petit déjeuner" }, icon: "🥐" },
+        { id: "burgers", name: { fr: "Burgers" }, icon: "🍔" },
+        { id: "sandwiches", name: { fr: "Sandwichs" }, icon: "🥪" },
+        { id: "pizza", name: { fr: "Pizza" }, icon: "🍕" },
+        { id: "desserts", name: { fr: "Desserts" }, icon: "🍰" },
+        { id: "salads", name: { fr: "Salades" }, icon: "🥗" },
+        { id: "snacks", name: { fr: "Snacks" }, icon: "🍿" },
+      ];
+
       try {
+        if (!isSupabaseConfigured()) {
+          setCategories(fallbackCats);
+          return;
+        }
+
         const { data, error } = await supabase
           .from("categories")
           .select("*")
@@ -42,21 +59,11 @@ export function CategoriesGrid() {
         if (data && data.length > 0) {
           setCategories(data);
         } else {
-          // Fallback if empty
-          setCategories([
-            { id: "coffee", name: { fr: "Café" }, icon: "☕" },
-            { id: "cold-drinks", name: { fr: "Boissons froides" }, icon: "🧊" },
-            { id: "breakfast", name: { fr: "Petit déjeuner" }, icon: "🥐" },
-            { id: "burgers", name: { fr: "Burgers" }, icon: "🍔" },
-            { id: "sandwiches", name: { fr: "Sandwichs" }, icon: "🥪" },
-            { id: "pizza", name: { fr: "Pizza" }, icon: "🍕" },
-            { id: "desserts", name: { fr: "Desserts" }, icon: "🍰" },
-            { id: "salads", name: { fr: "Salades" }, icon: "🥗" },
-            { id: "snacks", name: { fr: "Snacks" }, icon: "🍿" },
-          ]);
+          setCategories(fallbackCats);
         }
       } catch (err) {
-        console.error(err);
+        console.error("CategoriesGrid load failed, falling back to defaults:", err);
+        setCategories(fallbackCats);
       } finally {
         setIsLoading(false);
       }

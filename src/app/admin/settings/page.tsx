@@ -5,8 +5,8 @@ import { motion } from "framer-motion";
 import { Save, Store, Phone, Clock, MapPin, Globe, Palette, Database, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { useSettingsStore, ShopSettings } from "@/store/useSettingsStore";
-import { supabase } from "@/lib/supabase";
-import { MAMAKA_CATEGORIES, MAMAKA_PRODUCTS } from "@/lib/mamaka_data";
+import { supabase, isSupabaseConfigured } from "@/lib/supabase";
+import { MAMAKA_CATEGORIES, MAMAKA_PRODUCTS } from "@/lib/afnene_data";
 
 export default function AdminSettingsPage() {
   const { settings: storeSettings, fetchSettings, updateSettings } = useSettingsStore();
@@ -29,14 +29,15 @@ export default function AdminSettingsPage() {
     setLocalSettings((prev) => prev ? { ...prev, [key]: value } : null);
   };
 
-  const handleSave = async () => {
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault();
     if (!localSettings) return;
     setIsSaving(true);
     try {
       await updateSettings(localSettings);
       toast.success("Paramètres enregistrés avec succès !");
     } catch (err: any) {
-      toast.error(err.message || "Erreur lors de l'enregistrement");
+      toast.error("Erreur lors de l'enregistrement");
     } finally {
       setIsSaving(false);
     }
@@ -50,6 +51,52 @@ export default function AdminSettingsPage() {
 
     setIsImporting(true);
     toast.loading("Importation du menu Mamaka...", { id: "import-mamaka" });
+
+    if (!isSupabaseConfigured()) {
+      try {
+        // 1. Map categories locally
+        const mappedCats = MAMAKA_CATEGORIES.map((c) => ({
+          id: c.id,
+          name: c.name.fr,
+          icon: c.icon,
+          itemCount: MAMAKA_PRODUCTS.filter(p => p.category_id === c.id).length,
+          status: "Active"
+        }));
+        localStorage.setItem("afnene_categories", JSON.stringify(mappedCats));
+
+        // 2. Map products locally
+        const mappedProds = MAMAKA_PRODUCTS.map((p, idx) => ({
+          id: String(idx + 1),
+          category_id: p.category_id,
+          name: p.name.fr,
+          description: p.description.fr,
+          price: p.price,
+          media_type: p.media_type,
+          media_url: p.media_url,
+          available: p.available,
+          best_seller: p.best_seller,
+          featured: p.featured,
+          promotion: p.promotion,
+          ingredients: p.ingredients.fr,
+          sort_order: idx + 1
+        }));
+        localStorage.setItem("afnene-products-storage", JSON.stringify({
+          state: { products: mappedProds, isLoading: false, error: null },
+          version: 0
+        }));
+
+        toast.success("Menu Mamaka importé localement avec succès ! 🎉", { id: "import-mamaka" });
+        setTimeout(() => {
+          window.location.reload();
+        }, 1500);
+      } catch (err: any) {
+        console.error("Local import error:", err);
+        toast.error("Erreur lors de l'importation locale", { id: "import-mamaka" });
+      } finally {
+        setIsImporting(false);
+      }
+      return;
+    }
 
     try {
       // 1. Delete existing products
@@ -83,7 +130,7 @@ export default function AdminSettingsPage() {
       if (insProductsError) throw insProductsError;
 
       toast.success("Menu Mamaka importé avec succès ! 🎉", { id: "import-mamaka" });
-      
+
       // Clear localStorage cache to force refresh
       if (typeof window !== "undefined") {
         localStorage.removeItem("afnene-products-storage");

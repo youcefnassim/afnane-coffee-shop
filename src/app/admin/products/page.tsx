@@ -20,7 +20,8 @@ import Link from "next/link";
 import { formatPrice } from "@/lib/utils";
 import { toast } from "sonner";
 import { useProductStore, StoreProduct } from "@/store/useProductStore";
-import { supabase } from "@/lib/supabase";
+import { supabase, isSupabaseConfigured } from "@/lib/supabase";
+import { MAMAKA_CATEGORIES } from "@/lib/afnene_data";
 
 export default function AdminProductsPage() {
   const [search, setSearch] = useState("");
@@ -36,6 +37,21 @@ export default function AdminProductsPage() {
 
   useEffect(() => {
     setMounted(true);
+    if (!isSupabaseConfigured()) {
+      try {
+        const local = localStorage.getItem("afnene_categories");
+        if (local) {
+          const parsed = JSON.parse(local);
+          setCategories(parsed.map((c: any) => ({ id: c.id, name: typeof c.name === "object" ? (c.name?.fr || c.name?.en || c.id) : c.name || c.id })));
+        } else {
+          setCategories(MAMAKA_CATEGORIES.map((c) => ({ id: c.id, name: c.name.fr })));
+        }
+      } catch (e) {
+        setCategories(MAMAKA_CATEGORIES.map((c) => ({ id: c.id, name: c.name.fr })));
+      }
+      return;
+    }
+
     supabase
       .from("categories")
       .select("id, name")
@@ -204,11 +220,10 @@ export default function AdminProductsPage() {
       <div className="flex gap-2 overflow-x-auto pb-4 mb-6 scrollbar-hide">
         <button
           onClick={() => setSelectedCategoryId("all")}
-          className={`px-4 py-2.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all duration-300 border ${
-            selectedCategoryId === "all"
+          className={`px-4 py-2.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all duration-300 border ${selectedCategoryId === "all"
               ? "bg-[#D6B370] text-white border-[#D6B370]"
               : "bg-card dark:bg-card-dark text-muted dark:text-muted-dark border-border dark:border-border-dark hover:border-[#D6B370]/50"
-          }`}
+            }`}
         >
           Tous les produits ({products.length})
         </button>
@@ -218,16 +233,14 @@ export default function AdminProductsPage() {
             <button
               key={cat.id}
               onClick={() => setSelectedCategoryId(cat.id)}
-              className={`px-4 py-2.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all duration-300 border flex items-center gap-2 ${
-                selectedCategoryId === cat.id
+              className={`px-4 py-2.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all duration-300 border flex items-center gap-2 ${selectedCategoryId === cat.id
                   ? "bg-[#D6B370] text-white border-[#D6B370]"
                   : "bg-card dark:bg-card-dark text-muted dark:text-muted-dark border-border dark:border-border-dark hover:border-[#D6B370]/50"
-              }`}
+                }`}
             >
               {cat.name}
-              <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
-                selectedCategoryId === cat.id ? "bg-white/20 text-white" : "bg-primary/10 text-primary dark:text-[#D6B370] dark:bg-white/5"
-              }`}>
+              <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${selectedCategoryId === cat.id ? "bg-white/20 text-white" : "bg-primary/10 text-primary dark:text-[#D6B370] dark:bg-white/5"
+                }`}>
                 {count}
               </span>
             </button>
@@ -284,9 +297,8 @@ export default function AdminProductsPage() {
                     handleDrop(e, index);
                   }}
                   onDragEnd={handleDragEnd}
-                  className={`border-b border-border/50 dark:border-border-dark/50 last:border-0 hover:bg-primary/[0.02] dark:hover:bg-white/[0.02] transition-all select-none ${
-                    draggedIndex === index ? "opacity-30" : ""
-                  }`}
+                  className={`border-b border-border/50 dark:border-border-dark/50 last:border-0 hover:bg-primary/[0.02] dark:hover:bg-white/[0.02] transition-all select-none ${draggedIndex === index ? "opacity-30" : ""
+                    }`}
                 >
                   <td className="py-3.5 px-5">
                     <div className="flex items-center gap-3">
