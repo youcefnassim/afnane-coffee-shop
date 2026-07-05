@@ -16,6 +16,7 @@ export interface StoreProduct {
   promotion: boolean;
   calories?: number;
   ingredients: string;
+  sort_order?: number;
 }
 
 const INITIAL_PRODUCTS: StoreProduct[] = [
@@ -150,6 +151,7 @@ interface ProductState {
   deleteProduct: (id: string) => Promise<void>;
   toggleAvailability: (id: string) => Promise<void>;
   resetToDefaultMenu: () => Promise<void>;
+  updateProductOrder: (id: string, direction: "up" | "down") => Promise<void>;
 }
 
 const isSupabaseConfigured = () => {
@@ -191,6 +193,7 @@ export const useProductStore = create<ProductState>()(
             promotion: p.promotion,
             calories: p.calories || undefined,
             ingredients: typeof p.ingredients === "object" ? (p.ingredients?.fr || p.ingredients?.en || "") : p.ingredients || "",
+            sort_order: Number(p.sort_order) || 0,
           }));
 
           set({ products: mapped, isLoading: false });
@@ -332,6 +335,42 @@ export const useProductStore = create<ProductState>()(
         }
       },
 
+      updateProductOrder: async (id, direction) => {
+        const currentProducts = [...get().products];
+        const index = currentProducts.findIndex((p) => p.id === id);
+        if (index === -1) return;
+
+        const targetIndex = direction === "up" ? index - 1 : index + 1;
+        if (targetIndex < 0 || targetIndex >= currentProducts.length) return;
+
+        const p1 = currentProducts[index];
+        const p2 = currentProducts[targetIndex];
+
+        const order1 = p1.sort_order ?? index;
+        const order2 = p2.sort_order ?? targetIndex;
+
+        // Perform local swap
+        p1.sort_order = order2;
+        p2.sort_order = order1;
+
+        currentProducts[index] = p2;
+        currentProducts[targetIndex] = p1;
+
+        const sorted = [...currentProducts].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
+        set({ products: sorted });
+
+        if (isSupabaseConfigured()) {
+          try {
+            await Promise.all([
+              supabase.from("products").update({ sort_order: order2 }).eq("id", p1.id),
+              supabase.from("products").update({ sort_order: order1 }).eq("id", p2.id),
+            ]);
+          } catch (err) {
+            console.error("Failed to update product order in Supabase:", err);
+          }
+        }
+      },
+
       resetToDefaultMenu: async () => {
         if (!isSupabaseConfigured()) {
           set({ products: INITIAL_PRODUCTS });
@@ -369,7 +408,7 @@ export const useProductStore = create<ProductState>()(
           if (deleteError) throw deleteError;
 
           // 2. Insert all INITIAL_PRODUCTS into Supabase
-          const dbProducts = INITIAL_PRODUCTS.map((p) => ({
+          const dbProducts = INITIAL_PRODUCTS.map((p, idx) => ({
             category_id: p.category_id,
             name: { fr: p.name, en: p.name, ar: p.name },
             description: { fr: p.description, en: p.description, ar: p.description },
@@ -382,6 +421,7 @@ export const useProductStore = create<ProductState>()(
             featured: p.featured,
             promotion: p.promotion,
             calories: null,
+            sort_order: idx + 1,
           }));
 
           const { data, error: insertError } = await supabase
@@ -405,6 +445,7 @@ export const useProductStore = create<ProductState>()(
             featured: p.featured,
             promotion: p.promotion,
             ingredients: typeof p.ingredients === "object" ? (p.ingredients?.fr || p.ingredients?.en || "") : p.ingredients || "",
+            sort_order: Number(p.sort_order) || 0,
           }));
 
           set({ products: mapped, isLoading: false });

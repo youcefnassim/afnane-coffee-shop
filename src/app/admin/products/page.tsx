@@ -12,6 +12,8 @@ import {
   EyeOff,
   X,
   Upload,
+  ArrowUp,
+  ArrowDown,
 } from "lucide-react";
 import Link from "next/link";
 import { formatPrice } from "@/lib/utils";
@@ -209,6 +211,23 @@ export default function AdminProductsPage() {
                   </td>
                   <td className="py-3.5 px-5">
                     <div className="flex items-center justify-end gap-1.5">
+                      <button
+                        onClick={() => useProductStore.getState().updateProductOrder(product.id, "up")}
+                        disabled={index === 0}
+                        className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-primary/10 dark:hover:bg-white/10 disabled:opacity-20 transition-colors text-muted hover:text-primary dark:hover:text-secondary"
+                        title="Décaler vers le haut"
+                      >
+                        <ArrowUp className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        onClick={() => useProductStore.getState().updateProductOrder(product.id, "down")}
+                        disabled={index === filtered.length - 1}
+                        className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-primary/10 dark:hover:bg-white/10 disabled:opacity-20 transition-colors text-muted hover:text-primary dark:hover:text-secondary"
+                        title="Décaler vers le bas"
+                      >
+                        <ArrowDown className="w-3.5 h-3.5" />
+                      </button>
+
                       <button
                         onClick={() => handleToggle(product.id, product.name, product.available)}
                         className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-primary/10 dark:hover:bg-white/10 transition-colors text-muted hover:text-primary dark:hover:text-secondary"
