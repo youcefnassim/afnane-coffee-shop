@@ -14,24 +14,86 @@ import {
   Upload,
   ArrowUp,
   ArrowDown,
-  Menu,
-  CornerDownLeft,
+  GripVertical,
 } from "lucide-react";
 import Link from "next/link";
 import { formatPrice } from "@/lib/utils";
 import { toast } from "sonner";
 import { useProductStore, StoreProduct } from "@/store/useProductStore";
+import { supabase } from "@/lib/supabase";
 
 export default function AdminProductsPage() {
   const [search, setSearch] = useState("");
   const { products, toggleAvailability, deleteProduct, updateProduct } = useProductStore();
   const [editingProduct, setEditingProduct] = useState<StoreProduct | null>(null);
-  const [movingProductId, setMovingProductId] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
+
+  // Drag and drop states
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+  const [rowDraggableId, setRowDraggableId] = useState<string | null>(null);
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  const filtered = products.filter(
+    (p) =>
+      p.name.toLowerCase().includes(search.toLowerCase()) ||
+      p.category_id.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const handleDragStart = (e: React.DragEvent, index: number) => {
+    setDraggedIndex(index);
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/plain", index.toString());
+  };
+
+  const handleDrop = async (e: React.DragEvent, targetIndex: number) => {
+    e.preventDefault();
+    if (draggedIndex === null || draggedIndex === targetIndex) {
+      setDraggedIndex(null);
+      setRowDraggableId(null);
+      return;
+    }
+
+    const reordered = [...filtered];
+    const [draggedItem] = reordered.splice(draggedIndex, 1);
+    reordered.splice(targetIndex, 0, draggedItem);
+
+    // Update locally in Zustand store
+    const updatedProducts = products.map((p) => {
+      const newIdx = reordered.findIndex((item) => item.id === p.id);
+      if (newIdx !== -1) {
+        return { ...p, sort_order: newIdx + 1 };
+      }
+      return p;
+    });
+
+    useProductStore.setState({
+      products: updatedProducts.sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)),
+    });
+
+    // Update in Supabase database
+    const promises = reordered.map((item, idx) =>
+      supabase.from("products").update({ sort_order: idx + 1 }).eq("id", item.id)
+    );
+
+    try {
+      await Promise.all(promises);
+      toast.success("Ordre mis à jour !");
+    } catch (err: any) {
+      console.error(err);
+      toast.error("Erreur de sauvegarde de l'ordre");
+    }
+
+    setDraggedIndex(null);
+    setRowDraggableId(null);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedIndex(null);
+    setRowDraggableId(null);
+  };
 
   if (!mounted) return null;
 
@@ -58,11 +120,7 @@ export default function AdminProductsPage() {
     setEditingProduct(null);
   };
 
-  const filtered = products.filter(
-    (p) =>
-      p.name.toLowerCase().includes(search.toLowerCase()) ||
-      p.category_id.toLowerCase().includes(search.toLowerCase())
-  );
+
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 max-w-7xl">
@@ -126,22 +184,7 @@ export default function AdminProductsPage() {
         </div>
       </motion.div>
 
-      {movingProductId && (
-        <div className="mb-6 p-4 bg-primary/10 border border-primary/20 rounded-2xl flex items-center justify-between animate-pulse">
-          <div className="flex items-center gap-2">
-            <span className="text-xl">📍</span>
-            <span className="text-sm text-primary font-semibold">
-              Mode déplacement actif : Cliquez sur le bouton "Déposer ici" (icône ↩️) de la ligne de destination.
-            </span>
-          </div>
-          <button
-            onClick={() => setMovingProductId(null)}
-            className="text-xs px-3.5 py-2 rounded-xl bg-card border border-border text-muted hover:text-dark font-bold hover:shadow-sm transition-all"
-          >
-            Annuler
-          </button>
-        </div>
-      )}
+
 
       {/* Products Table */}
       <motion.div
@@ -176,12 +219,25 @@ export default function AdminProductsPage() {
             </thead>
             <tbody>
               {filtered.map((product, index) => (
-                <motion.tr
+                <tr
                   key={product.id}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: index * 0.03 }}
-                  className="border-b border-border/50 dark:border-border-dark/50 last:border-0 hover:bg-primary/[0.02] dark:hover:bg-white/[0.02] transition-colors"
+                  draggable={rowDraggableId === product.id}
+                  onDragStart={(e) => handleDragStart(e, index)}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    e.currentTarget.classList.add("bg-primary/5");
+                  }}
+                  onDragLeave={(e) => {
+                    e.currentTarget.classList.remove("bg-primary/5");
+                  }}
+                  onDrop={(e) => {
+                    e.currentTarget.classList.remove("bg-primary/5");
+                    handleDrop(e, index);
+                  }}
+                  onDragEnd={handleDragEnd}
+                  className={`border-b border-border/50 dark:border-border-dark/50 last:border-0 hover:bg-primary/[0.02] dark:hover:bg-white/[0.02] transition-all select-none ${
+                    draggedIndex === index ? "opacity-30" : ""
+                  }`}
                 >
                   <td className="py-3.5 px-5">
                     <div className="flex items-center gap-3">
@@ -231,64 +287,38 @@ export default function AdminProductsPage() {
                   </td>
                   <td className="py-3.5 px-5">
                     <div className="flex items-center justify-end gap-1.5">
-                      {movingProductId ? (
-                        movingProductId === product.id ? (
-                          <button
-                            onClick={() => setMovingProductId(null)}
-                            className="w-7 h-7 rounded-lg flex items-center justify-center bg-rose-500/10 text-rose-500 hover:bg-rose-500/25 transition-colors"
-                            title="Annuler le déplacement"
-                          >
-                            <X className="w-3.5 h-3.5" />
-                          </button>
-                        ) : (
-                          <button
-                            onClick={async () => {
-                              const toastId = toast.loading("Déplacement...");
-                              try {
-                                await useProductStore.getState().moveProductToPosition(movingProductId, index);
-                                setMovingProductId(null);
-                                toast.success("Produit déplacé avec succès !", { id: toastId });
-                              } catch (err: any) {
-                                toast.error(`Erreur: ${err.message || err}`, { id: toastId });
-                              }
-                            }}
-                            className="w-8 h-8 rounded-lg flex items-center justify-center bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/25 border border-emerald-500/20 transition-all shadow-sm animate-pulse"
-                            title="Déposer ici"
-                          >
-                            <CornerDownLeft className="w-4 h-4" />
-                          </button>
-                        )
-                      ) : (
-                        <>
-                          <button
-                            onClick={() => setMovingProductId(product.id)}
-                            className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-primary/10 dark:hover:bg-white/10 transition-colors text-muted hover:text-primary dark:hover:text-secondary"
-                            title="Déplacer ce produit"
-                          >
-                            <Menu className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => useProductStore.getState().updateProductOrder(product.id, "up")}
-                            disabled={index === 0}
-                            className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-primary/10 dark:hover:bg-white/10 disabled:opacity-20 transition-colors text-muted hover:text-primary dark:hover:text-secondary"
-                            title="Décaler vers le haut"
-                          >
-                            <ArrowUp className="w-3.5 h-3.5" />
-                          </button>
-                          <button
-                            onClick={() => useProductStore.getState().updateProductOrder(product.id, "down")}
-                            disabled={index === filtered.length - 1}
-                            className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-primary/10 dark:hover:bg-white/10 disabled:opacity-20 transition-colors text-muted hover:text-primary dark:hover:text-secondary"
-                            title="Décaler vers le bas"
-                          >
-                            <ArrowDown className="w-3.5 h-3.5" />
-                          </button>
-                        </>
-                      )}
+                      {/* ☰ Drag Handle - maintenir et glisser */}
+                      <button
+                        onMouseDown={() => setRowDraggableId(product.id)}
+                        onMouseUp={() => setRowDraggableId(null)}
+                        draggable="false"
+                        className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-primary/10 dark:hover:bg-white/10 transition-colors text-muted hover:text-primary cursor-grab active:cursor-grabbing"
+                        title="Maintenir et glisser pour déplacer"
+                      >
+                        <GripVertical className="w-4 h-4 pointer-events-none" />
+                      </button>
+
+                      {/* Up/Down arrows */}
+                      <button
+                        onClick={() => useProductStore.getState().updateProductOrder(product.id, "up")}
+                        disabled={index === 0}
+                        className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-primary/10 disabled:opacity-20 transition-colors text-muted hover:text-primary"
+                        title="Monter"
+                      >
+                        <ArrowUp className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        onClick={() => useProductStore.getState().updateProductOrder(product.id, "down")}
+                        disabled={index === filtered.length - 1}
+                        className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-primary/10 disabled:opacity-20 transition-colors text-muted hover:text-primary"
+                        title="Descendre"
+                      >
+                        <ArrowDown className="w-3.5 h-3.5" />
+                      </button>
 
                       <button
                         onClick={() => handleToggle(product.id, product.name, product.available)}
-                        className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-primary/10 dark:hover:bg-white/10 transition-colors text-muted hover:text-primary dark:hover:text-secondary"
+                        className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-primary/10 transition-colors"
                         title={product.available ? "Marquer comme indisponible" : "Marquer comme disponible"}
                       >
                         {product.available ? (
@@ -300,7 +330,7 @@ export default function AdminProductsPage() {
 
                       <button
                         onClick={() => setEditingProduct(product)}
-                        className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-primary/10 dark:hover:bg-white/10 transition-colors text-amber-500 hover:text-amber-600"
+                        className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-primary/10 transition-colors text-amber-500 hover:text-amber-600"
                         title="Modifier"
                       >
                         <Edit className="w-4 h-4" />
@@ -315,7 +345,7 @@ export default function AdminProductsPage() {
                       </button>
                     </div>
                   </td>
-                </motion.tr>
+                </tr>
               ))}
             </tbody>
           </table>
