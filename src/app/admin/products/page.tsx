@@ -14,7 +14,7 @@ import {
   Upload,
   ArrowUp,
   ArrowDown,
-  Move,
+  Menu,
   CornerDownLeft,
 } from "lucide-react";
 import Link from "next/link";
@@ -263,7 +263,7 @@ export default function AdminProductsPage() {
                             className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-primary/10 dark:hover:bg-white/10 transition-colors text-muted hover:text-primary dark:hover:text-secondary"
                             title="Déplacer ce produit"
                           >
-                            <Move className="w-3.5 h-3.5" />
+                            <Menu className="w-4 h-4" />
                           </button>
                           <button
                             onClick={() => useProductStore.getState().updateProductOrder(product.id, "up")}
