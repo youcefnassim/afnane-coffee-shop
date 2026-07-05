@@ -9,6 +9,8 @@ import {
   Trash2,
   FolderOpen,
   X,
+  ArrowUp,
+  ArrowDown,
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
@@ -75,6 +77,39 @@ export default function AdminCategoriesPage() {
       toast.error(`Erreur de chargement : ${err.message || err}`);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const updateCategoryOrder = async (id: string, direction: "up" | "down") => {
+    const idx = categories.findIndex((c) => c.id === id);
+    if (idx === -1) return;
+
+    if (direction === "up" && idx === 0) return;
+    if (direction === "down" && idx === categories.length - 1) return;
+
+    const targetIdx = direction === "up" ? idx - 1 : idx + 1;
+    
+    const newCategories = [...categories];
+    const temp = newCategories[idx];
+    newCategories[idx] = newCategories[targetIdx];
+    newCategories[targetIdx] = temp;
+
+    setCategories(newCategories);
+
+    const promises = newCategories.map((c, i) =>
+      supabase
+        .from("categories")
+        .update({ sort_order: i + 1 })
+        .eq("id", c.id)
+    );
+
+    try {
+      await Promise.all(promises);
+      toast.success("Ordre des catégories mis à jour !");
+    } catch (err: any) {
+      console.error(err);
+      toast.error("Erreur de sauvegarde de l'ordre");
+      loadCategoriesData();
     }
   };
 
@@ -241,6 +276,22 @@ export default function AdminCategoriesPage() {
                   {category.icon}
                 </div>
                 <div className="flex gap-1">
+                  <button
+                    onClick={() => updateCategoryOrder(category.id, "up")}
+                    disabled={index === 0}
+                    className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-primary/10 disabled:opacity-20 transition-colors text-muted hover:text-primary"
+                    title="Déplacer vers le haut / gauche"
+                  >
+                    <ArrowUp className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    onClick={() => updateCategoryOrder(category.id, "down")}
+                    disabled={index === filtered.length - 1}
+                    className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-primary/10 disabled:opacity-20 transition-colors text-muted hover:text-primary"
+                    title="Déplacer vers le bas / droite"
+                  >
+                    <ArrowDown className="w-3.5 h-3.5" />
+                  </button>
                   <button
                     onClick={() => openEditModal(category)}
                     className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-amber-500/10 transition-colors text-amber-500"
