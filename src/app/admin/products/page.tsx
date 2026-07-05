@@ -311,8 +311,8 @@ export default function AdminProductsPage() {
                       </div>
                     </div>
                   </td>
-                  <td className="hidden md:table-cell py-3.5 px-5 text-muted dark:text-muted-dark capitalize">
-                    {product.category_id}
+                  <td className="hidden md:table-cell py-3.5 px-5 text-muted dark:text-muted-dark capitalize font-medium">
+                    {categories.find((c) => c.id === product.category_id)?.name || product.category_id}
                   </td>
                   <td className="py-3.5 px-5 font-semibold text-primary dark:text-secondary">
                     {formatPrice(product.price)}
@@ -443,16 +443,16 @@ export default function AdminProductsPage() {
                   <div>
                     <label className="block text-xs font-semibold text-muted mb-1">Catégorie</label>
                     <select
-                      value={editingProduct.category_id}
+                      value={editingProduct.category_id || ""}
                       onChange={(e) => setEditingProduct({ ...editingProduct, category_id: e.target.value })}
                       className="w-full px-4 py-2.5 rounded-xl border border-border dark:border-border-dark bg-background dark:bg-white/5 text-dark dark:text-white text-sm capitalize"
                     >
-                      <option value="coffee">Café (Coffee)</option>
-                      <option value="cold-drinks">Boissons froides</option>
-                      <option value="burgers">Burgers</option>
-                      <option value="pizza">Pizza</option>
-                      <option value="desserts">Desserts</option>
-                      <option value="snacks">Snacks</option>
+                      <option value="">Sélectionner une catégorie</option>
+                      {categories.map((cat) => (
+                        <option key={cat.id} value={cat.id}>
+                          {cat.name}
+                        </option>
+                      ))}
                     </select>
                   </div>
 

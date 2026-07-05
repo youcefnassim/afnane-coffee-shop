@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Video, Image as ImageIcon, Upload } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
 import { useProductStore } from "@/store/useProductStore";
+import { supabase } from "@/lib/supabase";
 
 export default function NewProductPage() {
   const router = useRouter();
@@ -13,6 +14,7 @@ export default function NewProductPage() {
 
   const [name, setName] = useState("");
   const [category, setCategory] = useState("coffee");
+  const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
   const [price, setPrice] = useState("");
   const [description, setDescription] = useState("");
   const [ingredients, setIngredients] = useState("");
@@ -22,6 +24,25 @@ export default function NewProductPage() {
   const [featured, setFeatured] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+
+  useEffect(() => {
+    supabase
+      .from("categories")
+      .select("id, name")
+      .order("sort_order", { ascending: true })
+      .then(({ data }) => {
+        if (data) {
+          const mapped = data.map((c: any) => ({
+            id: c.id,
+            name: typeof c.name === "object" ? (c.name?.fr || c.name?.en || c.id) : c.name || c.id,
+          }));
+          setCategories(mapped);
+          if (mapped.length > 0) {
+            setCategory(mapped[0].id);
+          }
+        }
+      });
+  }, []);
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -125,14 +146,11 @@ export default function NewProductPage() {
               onChange={(e) => setCategory(e.target.value)}
               className="w-full px-4 py-2.5 rounded-xl border border-border dark:border-border-dark bg-background dark:bg-white/5 text-dark dark:text-white text-sm focus:outline-none focus:border-primary capitalize"
             >
-              <option value="coffee">Café (Coffee)</option>
-              <option value="cold-drinks">Boissons froides</option>
-              <option value="breakfast">Petit déjeuner</option>
-              <option value="burgers">Burgers</option>
-              <option value="sandwiches">Sandwichs</option>
-              <option value="pizza">Pizza</option>
-              <option value="desserts">Desserts</option>
-              <option value="snacks">Snacks</option>
+              {categories.map((cat) => (
+                <option key={cat.id} value={cat.id}>
+                  {cat.name}
+                </option>
+              ))}
             </select>
           </div>
 
