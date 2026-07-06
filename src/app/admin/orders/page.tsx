@@ -6,6 +6,7 @@ import { ShoppingBag, Printer, Volume2, Plus, Phone, User, Utensils, X, Check, C
 import { Order, OrderStatus } from "@/types/database";
 import { formatPrice } from "@/lib/utils";
 import { toast } from "sonner";
+import { useProductStore } from "@/store/useProductStore";
 
 const INITIAL_MOCK_ORDERS: Order[] = [
   {
@@ -48,6 +49,7 @@ const STATUS_CONFIG: Record<OrderStatus, { label: string; color: string; bg: str
 };
 
 export default function AdminOrdersPage() {
+  const { products } = useProductStore();
   const [orders, setOrders] = useState<Order[]>(INITIAL_MOCK_ORDERS);
   const [filter, setFilter] = useState<OrderStatus | "all">("all");
   const [printingOrder, setPrintingOrder] = useState<Order | null>(null);
@@ -80,26 +82,88 @@ export default function AdminOrdersPage() {
     }
   };
 
-  const simulateIncomingOrder = () => {
-    playChime();
+  const [simulationModalOpen, setSimulationModalOpen] = useState(false);
+  const [simName, setSimName] = useState("Yassine Mansouri");
+  const [simPhone, setSimPhone] = useState("0770 45 67 89");
+  const [simType, setSimType] = useState<"dine_in" | "take_away" | "click_and_collect">("click_and_collect");
+  const [simTable, setSimTable] = useState("4");
+  const [simPickup, setSimPickup] = useState("Dans 20 min");
+  const [simItems, setSimItems] = useState<{ productId: string; quantity: number }[]>([]);
+
+  const handleOpenSimulation = () => {
+    const availableProducts = useProductStore.getState().products || [];
+    if (availableProducts.length > 0) {
+      setSimItems([
+        { productId: availableProducts[0].id, quantity: 1 }
+      ]);
+    } else {
+      setSimItems([]);
+    }
+    setSimulationModalOpen(true);
+  };
+
+  const handleAddSimItem = () => {
+    const availableProducts = useProductStore.getState().products || [];
+    if (availableProducts.length > 0) {
+      setSimItems((prev) => [...prev, { productId: availableProducts[0].id, quantity: 1 }]);
+    }
+  };
+
+  const handleRemoveSimItem = (idx: number) => {
+    setSimItems((prev) => prev.filter((_, i) => i !== idx));
+  };
+
+  const handleSimItemChange = (idx: number, field: "productId" | "quantity", value: any) => {
+    setSimItems((prev) =>
+      prev.map((item, i) => (i === idx ? { ...item, [field]: value } : item))
+    );
+  };
+
+  const handleSimulateSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (simItems.length === 0) {
+      toast.error("Veuillez ajouter au moins un produit à la commande");
+      return;
+    }
+
+    const availableProducts = useProductStore.getState().products || [];
+    
+    let total = 0;
+    const orderItems = simItems.map((item, i) => {
+      const prod = availableProducts.find((p) => p.id === item.productId);
+      const name = prod ? prod.name : "Produit Inconnu";
+      const price = prod ? prod.price : 0;
+      const itemTotal = price * item.quantity;
+      total += itemTotal;
+      return {
+        id: `i-${Date.now()}-${i}`,
+        order_id: "new",
+        product_id: item.productId,
+        product_name: name,
+        quantity: item.quantity,
+        unit_price: price,
+        total_price: itemTotal,
+      };
+    });
+
     const newOrd: Order = {
       id: `ord-${Math.floor(100 + Math.random() * 900)}`,
-      customer_name: "Yassine Mansouri",
-      customer_phone: "0770 45 67 89",
-      order_type: "click_and_collect",
-      pickup_time: "Dans 20 min",
+      customer_name: simName,
+      customer_phone: simPhone,
+      order_type: simType,
+      table_number: simType === "dine_in" ? Number(simTable) || undefined : undefined,
+      pickup_time: simType !== "dine_in" ? simPickup : undefined,
       status: "pending",
-      total_amount: 1500,
+      total_amount: total,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
-      items: [
-        { id: `i-${Date.now()}`, order_id: "new", product_id: "p1", product_name: "Crêpe Nutella Banane", quantity: 1, unit_price: 650, total_price: 650 },
-        { id: `i-${Date.now()}-2`, order_id: "new", product_id: "p2", product_name: "Iced Caramel Macchiato", quantity: 1, unit_price: 500, total_price: 500 },
-        { id: `i-${Date.now()}-3`, order_id: "new", product_id: "p3", product_name: "Fresh Orange Juice", quantity: 1, unit_price: 350, total_price: 350 },
-      ],
+      items: orderItems,
     };
+
     setOrders((prev) => [newOrd, ...prev]);
-    toast.success("🔔 NOUVELLE COMMANDE REÇUE ! (#" + newOrd.id.slice(-4) + ")");
+    playChime();
+    toast.success("🔔 NOUVELLE COMMANDE SIMULÉE ! (#" + newOrd.id.slice(-4) + ")");
+    setSimulationModalOpen(false);
   };
 
   const updateOrderStatus = (orderId: string, newStatus: OrderStatus) => {
@@ -190,7 +254,7 @@ export default function AdminOrdersPage() {
           </button>
 
           <button
-            onClick={simulateIncomingOrder}
+            onClick={handleOpenSimulation}
             className="btn-primary text-xs px-4 py-2 flex items-center gap-1.5 shadow-md"
           >
             <Plus className="w-4 h-4" />
@@ -403,6 +467,202 @@ export default function AdminOrdersPage() {
                   Lancer l&apos;impression
                 </button>
               </div>
+            </motion.div>
+          </div>
+        )}
+
+        {/* Simulation Form Modal */}
+        {simulationModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+              onClick={() => setSimulationModalOpen(false)}
+            />
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="relative w-full max-w-2xl bg-card dark:bg-card-dark p-6 rounded-3xl shadow-2xl border border-border/40 z-10 max-h-[90vh] overflow-y-auto space-y-4"
+            >
+              <div className="flex items-center justify-between pb-3 border-b border-border/40">
+                <h3 className="text-lg font-bold text-dark dark:text-white" style={{ fontFamily: "var(--font-heading)" }}>
+                  Simuler une nouvelle commande 📩
+                </h3>
+                <button onClick={() => setSimulationModalOpen(false)} className="text-muted hover:text-dark dark:hover:text-white">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <form onSubmit={handleSimulateSubmit} className="space-y-4">
+                {/* Customer Details */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-muted mb-1">Nom du client</label>
+                    <input
+                      type="text"
+                      required
+                      value={simName}
+                      onChange={(e) => setSimName(e.target.value)}
+                      placeholder="Ex: Yassine Mansouri"
+                      className="w-full px-4 py-2.5 rounded-xl border border-border dark:border-border-dark bg-background dark:bg-white/5 text-dark dark:text-white text-sm focus:outline-none focus:border-primary"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-muted mb-1">Téléphone</label>
+                    <input
+                      type="text"
+                      required
+                      value={simPhone}
+                      onChange={(e) => setSimPhone(e.target.value)}
+                      placeholder="Ex: 0770 45 67 89"
+                      className="w-full px-4 py-2.5 rounded-xl border border-border dark:border-border-dark bg-background dark:bg-white/5 text-dark dark:text-white text-sm focus:outline-none focus:border-primary"
+                    />
+                  </div>
+                </div>
+
+                {/* Order Type & Settings */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-muted mb-1">Type de commande</label>
+                    <select
+                      value={simType}
+                      onChange={(e) => setSimType(e.target.value as any)}
+                      className="w-full px-4 py-2.5 rounded-xl border border-border dark:border-border-dark bg-background dark:bg-white/5 text-dark dark:text-white text-sm focus:outline-none focus:border-primary"
+                    >
+                      <option value="click_and_collect">Click & Collect</option>
+                      <option value="dine_in">Sur place (Table)</option>
+                      <option value="take_away">À emporter</option>
+                    </select>
+                  </div>
+                  <div>
+                    {simType === "dine_in" ? (
+                      <>
+                        <label className="block text-xs font-semibold text-muted mb-1">Numéro de Table</label>
+                        <input
+                          type="number"
+                          required
+                          min="1"
+                          value={simTable}
+                          onChange={(e) => setSimTable(e.target.value)}
+                          placeholder="Ex: 4"
+                          className="w-full px-4 py-2.5 rounded-xl border border-border dark:border-border-dark bg-background dark:bg-white/5 text-dark dark:text-white text-sm focus:outline-none focus:border-primary"
+                        />
+                      </>
+                    ) : (
+                      <>
+                        <label className="block text-xs font-semibold text-muted mb-1">Temps de récupération</label>
+                        <input
+                          type="text"
+                          required
+                          value={simPickup}
+                          onChange={(e) => setSimPickup(e.target.value)}
+                          placeholder="Ex: Dans 20 min"
+                          className="w-full px-4 py-2.5 rounded-xl border border-border dark:border-border-dark bg-background dark:bg-white/5 text-dark dark:text-white text-sm focus:outline-none focus:border-primary"
+                        />
+                      </>
+                    )}
+                  </div>
+                </div>
+
+                {/* Ordered Items List */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-xs font-semibold text-muted">Produits commandés</label>
+                    <button
+                      type="button"
+                      onClick={handleAddSimItem}
+                      className="text-primary hover:text-primary-light text-xs font-bold flex items-center gap-1"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      Ajouter un produit
+                    </button>
+                  </div>
+
+                  {simItems.length === 0 ? (
+                    <div className="text-center py-6 border border-dashed border-border rounded-xl text-muted text-xs">
+                      Aucun produit sélectionné. Cliquez sur &quot;Ajouter un produit&quot;.
+                    </div>
+                  ) : (
+                    <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                      {simItems.map((item, idx) => {
+                        const selectedProd = products.find(p => p.id === item.productId);
+                        const itemPrice = selectedProd ? selectedProd.price : 0;
+                        return (
+                          <div key={idx} className="flex gap-2 items-center">
+                            {/* Product Selector */}
+                            <select
+                              value={item.productId}
+                              onChange={(e) => handleSimItemChange(idx, "productId", e.target.value)}
+                              className="flex-1 px-3 py-2 rounded-xl border border-border dark:border-border-dark bg-background dark:bg-white/5 text-dark dark:text-white text-sm focus:outline-none"
+                            >
+                              {products.map(p => (
+                                <option key={p.id} value={p.id}>
+                                  {p.name} ({p.price} DA)
+                                </option>
+                              ))}
+                            </select>
+
+                            {/* Quantity Selector */}
+                            <input
+                              type="number"
+                              required
+                              min="1"
+                              value={item.quantity}
+                              onChange={(e) => handleSimItemChange(idx, "quantity", parseInt(e.target.value) || 1)}
+                              className="w-20 px-3 py-2 rounded-xl border border-border dark:border-border-dark bg-background dark:bg-white/5 text-dark dark:text-white text-sm text-center focus:outline-none"
+                            />
+
+                            {/* Subtotal preview */}
+                            <div className="w-24 text-right text-xs font-semibold text-dark dark:text-white">
+                              {itemPrice * item.quantity} DA
+                            </div>
+
+                            {/* Delete line button */}
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveSimItem(idx)}
+                              className="w-9 h-9 rounded-xl border border-danger/30 hover:bg-danger/10 text-danger flex items-center justify-center transition-colors"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+
+                {/* Total amount preview */}
+                <div className="flex items-center justify-between pt-4 border-t border-border/40">
+                  <span className="text-sm font-bold text-dark dark:text-white">Montant Total :</span>
+                  <span className="text-lg font-bold text-primary">
+                    {simItems.reduce((acc, item) => {
+                      const prod = products.find(p => p.id === item.productId);
+                      return acc + (prod ? prod.price * item.quantity : 0);
+                    }, 0)} DA
+                  </span>
+                </div>
+
+                {/* Action buttons */}
+                <div className="pt-4 flex justify-end gap-2 border-t border-border/40">
+                  <button
+                    type="button"
+                    onClick={() => setSimulationModalOpen(false)}
+                    className="px-4 py-2.5 rounded-xl border border-border text-xs font-semibold text-muted hover:bg-primary/5"
+                  >
+                    Annuler
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-5 py-2.5 rounded-xl bg-primary text-white text-xs font-bold hover:bg-primary-light transition-colors"
+                  >
+                    Simuler la Réception 🚀
+                  </button>
+                </div>
+              </form>
             </motion.div>
           </div>
         )}
