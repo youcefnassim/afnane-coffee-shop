@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -32,6 +32,90 @@ const DEFAULT_CATEGORIES: AdminCategory[] = [
   { id: "desserts", name: "Gâteaux (viennoiserie)", icon: "🍰", itemCount: 0, status: "Active" },
   { id: "snacks-sales", name: "Salés", icon: "🍕", itemCount: 0, status: "Active" },
 ]
+
+export default function AdminCategoriesPage() {
+  const [search, setSearch] = useState("");
+  const [categories, setCategories] = useState<AdminCategory[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editingCategory, setEditingCategory] = useState<AdminCategory | null>(null);
+
+  // Form states
+  const [name, setName] = useState("");
+  const [icon, setIcon] = useState("☕");
+  const [status, setStatus] = useState<"Active" | "Inactive">("Active");
+
+  useEffect(() => {
+    loadCategoriesData();
+  }, []);
+
+  const loadCategoriesData = async () => {
+    setIsLoading(true);
+    if (!isSupabaseConfigured()) {
+      try {
+        const local = localStorage.getItem("afnene_categories");
+        if (local) {
+          setCategories(JSON.parse(local));
+        } else {
+          setCategories(DEFAULT_CATEGORIES);
+        }
+      } catch (e) {
+        setCategories(DEFAULT_CATEGORIES);
+      } finally {
+        setIsLoading(false);
+      }
+      return;
+    }
+
+    try {
+      const { data: cats, error: catError } = await supabase
+        .from("categories")
+        .select("*")
+        .order("sort_order", { ascending: true });
+
+      if (catError) throw catError;
+
+      const { data: prods, error: prodError } = await supabase
+        .from("products")
+        .select("category_id");
+
+      if (prodError) throw prodError;
+
+      const counts: Record<string, number> = {};
+      (prods || []).forEach((p: any) => {
+        if (p.category_id) {
+          counts[p.category_id] = (counts[p.category_id] || 0) + 1;
+        }
+      });
+
+      if (cats) {
+        const mapped: AdminCategory[] = cats.map((c: any) => ({
+          id: c.id,
+          name: typeof c.name === "object" ? (c.name?.fr || c.name?.en || "") : c.name || "",
+          icon: c.icon || "☕",
+          itemCount: counts[c.id] || 0,
+          status: "Active",
+        }));
+        setCategories(mapped);
+      }
+    } catch (err: any) {
+      console.error("Failed to load categories:", err);
+      toast.error(`Erreur de chargement : ${err.message || err}`);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const updateCategoryOrder = async (id: string, direction: "up" | "down") => {
+    const idx = categories.findIndex((c) => c.id === id);
+    if (idx === -1) return;
+
+    if (direction === "up" && idx === 0) return;
+    if (direction === "down" && idx === categories.length - 1) return;
+
+    const targetIdx = direction === "up" ? idx - 1 : idx + 1;
+    
+    const newCategories = [...categories];
     const temp = newCategories[idx];
     newCategories[idx] = newCategories[targetIdx];
     newCategories[targetIdx] = temp;
@@ -40,7 +124,7 @@ const DEFAULT_CATEGORIES: AdminCategory[] = [
 
     if (!isSupabaseConfigured()) {
       localStorage.setItem("afnene_categories", JSON.stringify(newCategories));
-      toast.success("Ordre des catégories mis à jour !");
+      toast.success("Ordre des cat├®gories mis ├á jour !");
       return;
     }
 
@@ -53,7 +137,7 @@ const DEFAULT_CATEGORIES: AdminCategory[] = [
 
     try {
       await Promise.all(promises);
-      toast.success("Ordre des catégories mis à jour !");
+      toast.success("Ordre des cat├®gories mis ├á jour !");
     } catch (err: any) {
       console.error(err);
       toast.error("Erreur de sauvegarde de l'ordre");
@@ -78,12 +162,12 @@ const DEFAULT_CATEGORIES: AdminCategory[] = [
   };
 
   const handleDelete = async (id: string, catName: string) => {
-    if (confirm(`Voulez-vous vraiment supprimer la catégorie "${catName}" ?`)) {
+    if (confirm(`Voulez-vous vraiment supprimer la cat├®gorie "${catName}" ?`)) {
       if (!isSupabaseConfigured()) {
         const newCats = categories.filter((c) => c.id !== id);
         setCategories(newCats);
         localStorage.setItem("afnene_categories", JSON.stringify(newCats));
-        toast.success(`Catégorie "${catName}" supprimée avec succès`);
+        toast.success(`Cat├®gorie "${catName}" supprim├®e avec succ├¿s`);
         return;
       }
 
@@ -97,7 +181,7 @@ const DEFAULT_CATEGORIES: AdminCategory[] = [
         if (error) throw error;
 
         setCategories((prev) => prev.filter((c) => c.id !== id));
-        toast.success(`Catégorie "${catName}" supprimée avec succès`, { id: toastId });
+        toast.success(`Cat├®gorie "${catName}" supprim├®e avec succ├¿s`, { id: toastId });
       } catch (err: any) {
         toast.error(`Erreur : ${err.message || err}`, { id: toastId });
       }
@@ -117,7 +201,7 @@ const DEFAULT_CATEGORIES: AdminCategory[] = [
         );
         setCategories(newCats);
         localStorage.setItem("afnene_categories", JSON.stringify(newCats));
-        toast.success(`Catégorie "${name}" mise à jour !`, { id: toastId });
+        toast.success(`Cat├®gorie "${name}" mise ├á jour !`, { id: toastId });
       } else {
         const newId = name.toLowerCase().trim()
           .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
@@ -135,7 +219,7 @@ const DEFAULT_CATEGORIES: AdminCategory[] = [
         ];
         setCategories(newCats);
         localStorage.setItem("afnene_categories", JSON.stringify(newCats));
-        toast.success(`Catégorie "${name}" créée avec succès !`, { id: toastId });
+        toast.success(`Cat├®gorie "${name}" cr├®├®e avec succ├¿s !`, { id: toastId });
       }
       setModalOpen(false);
       return;
@@ -158,7 +242,7 @@ const DEFAULT_CATEGORIES: AdminCategory[] = [
             c.id === editingCategory.id ? { ...c, name, icon } : c
           )
         );
-        toast.success(`Catégorie "${name}" mise à jour !`, { id: toastId });
+        toast.success(`Cat├®gorie "${name}" mise ├á jour !`, { id: toastId });
       } else {
         const newId = name.toLowerCase().trim()
           .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
@@ -187,7 +271,7 @@ const DEFAULT_CATEGORIES: AdminCategory[] = [
             status: "Active",
           },
         ]);
-        toast.success(`Catégorie "${name}" créée avec succès !`, { id: toastId });
+        toast.success(`Cat├®gorie "${name}" cr├®├®e avec succ├¿s !`, { id: toastId });
       }
       setModalOpen(false);
     } catch (err: any) {
@@ -212,15 +296,15 @@ const DEFAULT_CATEGORIES: AdminCategory[] = [
             className="text-2xl font-bold text-dark dark:text-white"
             style={{ fontFamily: "var(--font-heading)" }}
           >
-            Catégories du Menu
+            Cat├®gories du Menu
           </h1>
           <p className="text-muted dark:text-muted-dark text-sm mt-1">
-            Gérez vos catégories et leurs icônes ({categories.length} au total)
+            G├®rez vos cat├®gories et leurs ic├┤nes ({categories.length} au total)
           </p>
         </div>
         <button onClick={openAddModal} className="btn-primary text-sm px-5 py-2.5 flex items-center gap-2">
           <Plus className="w-4 h-4" />
-          Ajouter une catégorie
+          Ajouter une cat├®gorie
         </button>
       </motion.div>
 
@@ -235,7 +319,7 @@ const DEFAULT_CATEGORIES: AdminCategory[] = [
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
           <input
             type="text"
-            placeholder="Rechercher une catégorie..."
+            placeholder="Rechercher une cat├®gorie..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-card dark:bg-card-dark border border-border dark:border-border-dark text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
@@ -268,7 +352,7 @@ const DEFAULT_CATEGORIES: AdminCategory[] = [
                     onClick={() => updateCategoryOrder(category.id, "up")}
                     disabled={index === 0}
                     className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-primary/10 disabled:opacity-20 transition-colors text-muted hover:text-primary"
-                    title="Déplacer vers le haut / gauche"
+                    title="D├®placer vers le haut / gauche"
                   >
                     <ArrowUp className="w-3.5 h-3.5" />
                   </button>
@@ -276,7 +360,7 @@ const DEFAULT_CATEGORIES: AdminCategory[] = [
                     onClick={() => updateCategoryOrder(category.id, "down")}
                     disabled={index === filtered.length - 1}
                     className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-primary/10 disabled:opacity-20 transition-colors text-muted hover:text-primary"
-                    title="Déplacer vers le bas / droite"
+                    title="D├®placer vers le bas / droite"
                   >
                     <ArrowDown className="w-3.5 h-3.5" />
                   </button>
@@ -318,7 +402,7 @@ const DEFAULT_CATEGORIES: AdminCategory[] = [
         <div className="text-center py-12 glass-card rounded-[var(--radius-lg)]">
           <FolderOpen className="w-12 h-12 text-muted/30 mx-auto mb-4" />
           <h3 className="text-lg font-semibold text-dark dark:text-white mb-2">
-            Aucune catégorie trouvée
+            Aucune cat├®gorie trouv├®e
           </h3>
           <p className="text-muted dark:text-muted-dark text-sm">
             Essayez d&apos;ajuster votre terme de recherche.
@@ -345,7 +429,7 @@ const DEFAULT_CATEGORIES: AdminCategory[] = [
             >
               <div className="flex items-center justify-between pb-2 border-b border-border/40">
                 <h3 className="text-lg font-bold text-dark dark:text-white" style={{ fontFamily: "var(--font-heading)" }}>
-                  {editingCategory ? "Modifier la catégorie" : "Nouvelle catégorie"}
+                  {editingCategory ? "Modifier la cat├®gorie" : "Nouvelle cat├®gorie"}
                 </h3>
                 <button onClick={() => setModalOpen(false)} className="text-muted hover:text-dark">
                   <X className="w-5 h-5" />
@@ -354,7 +438,7 @@ const DEFAULT_CATEGORIES: AdminCategory[] = [
 
               <form onSubmit={handleSave} className="space-y-4 pt-2">
                 <div>
-                  <label className="block text-xs font-semibold text-muted mb-1">Nom de la catégorie</label>
+                  <label className="block text-xs font-semibold text-muted mb-1">Nom de la cat├®gorie</label>
                   <input
                     type="text"
                     required
@@ -366,7 +450,7 @@ const DEFAULT_CATEGORIES: AdminCategory[] = [
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-muted mb-1">Icône / Émoji</label>
+                  <label className="block text-xs font-semibold text-muted mb-1">Ic├┤ne / ├ëmoji</label>
                   <div className="flex gap-2 items-center">
                     <input
                       type="text"
@@ -399,7 +483,7 @@ const DEFAULT_CATEGORIES: AdminCategory[] = [
                     className="w-full px-4 py-2.5 rounded-xl border border-border dark:border-border-dark bg-background dark:bg-white/5 text-dark dark:text-white text-sm focus:outline-none focus:border-primary"
                   >
                     <option value="Active">Actif (Visible dans le menu)</option>
-                    <option value="Inactive">Inactif (Masqué)</option>
+                    <option value="Inactive">Inactif (Masqu├®)</option>
                   </select>
                 </div>
 
@@ -415,7 +499,7 @@ const DEFAULT_CATEGORIES: AdminCategory[] = [
                     type="submit"
                     className="px-5 py-2 rounded-xl bg-primary text-white text-xs font-semibold hover:bg-primary-light transition-colors"
                   >
-                    {editingCategory ? "Enregistrer" : "Créer"}
+                    {editingCategory ? "Enregistrer" : "Cr├®er"}
                   </button>
                 </div>
               </form>
