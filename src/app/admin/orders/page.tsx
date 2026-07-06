@@ -58,6 +58,16 @@ export default function AdminOrdersPage() {
   useEffect(() => {
     setMounted(true);
     try {
+      if (typeof window !== "undefined") {
+        const params = new URLSearchParams(window.location.search);
+        if (params.get("clear") === "true" || params.get("reset") === "true") {
+          localStorage.removeItem("afnene_orders");
+          window.history.replaceState({}, document.title, window.location.pathname);
+          window.location.reload();
+          return;
+        }
+      }
+      
       const saved = localStorage.getItem("afnene_orders");
       if (saved) {
         const parsed = JSON.parse(saved);
@@ -385,22 +395,22 @@ export default function AdminOrdersPage() {
                   <div className="space-y-1.5">
                     <div className="flex items-center gap-2 text-dark dark:text-white font-bold text-base">
                       <User className="w-4 h-4 text-primary shrink-0" />
-                      <span>{order.customer_name || "Client"}</span>
+                      <span>{String(order.customer_name || "Client")}</span>
                     </div>
                     <div className="flex items-center gap-2 text-muted text-xs">
                       <Phone className="w-3.5 h-3.5" />
-                      <span>{order.customer_phone || "N/A"}</span>
+                      <span>{String(order.customer_phone || "N/A")}</span>
                     </div>
                     <div className="flex items-center gap-2 text-xs font-semibold text-secondary pt-1">
                       {order.order_type === "click_and_collect" ? (
                         <>
                           <ShoppingBag className="w-3.5 h-3.5" />
-                          <span>Click & Collect ({order.pickup_time})</span>
+                          <span>Click & Collect ({String(order.pickup_time || "")})</span>
                         </>
                       ) : (
                         <>
                           <Utensils className="w-3.5 h-3.5" />
-                          <span>Sur place - Table {order.table_number || 1}</span>
+                          <span>Sur place - Table {String(order.table_number || 1)}</span>
                         </>
                       )}
                     </div>
@@ -413,9 +423,9 @@ export default function AdminOrdersPage() {
                     <div key={item.id} className="flex justify-between items-center text-xs">
                       <span className="text-dark dark:text-white font-medium">
                         <strong className="text-primary mr-1.5">{item.quantity}x</strong>
-                        {item.product_name}
+                        {String(item.product_name || "Produit")}
                       </span>
-                      <span className="text-muted font-semibold">{item.total_price} DA</span>
+                      <span className="text-muted font-semibold">{String(item.total_price || 0)} DA</span>
                     </div>
                   ))}
                   <div className="flex justify-between items-center text-sm font-bold text-dark dark:text-white pt-2">
