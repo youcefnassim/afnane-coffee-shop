@@ -44,6 +44,7 @@ export function AdminSidebar() {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const isActive = (href: string) => {
+    if (!pathname) return false;
     if (href === "/admin") return pathname === "/admin";
     return pathname.startsWith(href);
   };

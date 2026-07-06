@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import React, { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ShoppingBag, Printer, Volume2, Plus, Phone, User, Utensils, X, Check, Coffee, Trash2 } from "lucide-react";
 import { Order, OrderStatus } from "@/types/database";
@@ -48,7 +48,7 @@ const STATUS_CONFIG: Record<OrderStatus, { label: string; color: string; bg: str
   cancelled: { label: "Annulé", color: "text-danger", bg: "bg-danger/10 border-danger/20" },
 };
 
-export default function AdminOrdersPage() {
+function AdminOrdersPage() {
   const { products } = useProductStore();
   const [orders, setOrders] = useState<Order[]>([]);
   const [filter, setFilter] = useState<OrderStatus | "all">("all");
@@ -749,5 +749,59 @@ export default function AdminOrdersPage() {
         )}
       </AnimatePresence>
     </div>
+  );
+}
+
+class ErrorBoundary extends React.Component<
+  { children: React.ReactNode },
+  { hasError: boolean; error: Error | null }
+> {
+  constructor(props: any) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: any) {
+    console.error("ErrorBoundary caught an error", error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="p-6 max-w-xl mx-auto my-10 bg-red-500/10 border border-red-500/20 rounded-3xl text-red-600 dark:text-red-400 space-y-4">
+          <h2 className="text-lg font-bold">Une erreur est survenue sur la page des commandes</h2>
+          <p className="text-sm font-mono bg-black/10 dark:bg-white/10 p-4 rounded-xl overflow-x-auto">
+            {this.state.error?.stack || this.state.error?.message || String(this.state.error)}
+          </p>
+          <button
+            onClick={() => {
+              try {
+                localStorage.removeItem("afnene_orders");
+                window.location.reload();
+              } catch (e) {
+                console.error(e);
+              }
+            }}
+            className="px-4 py-2 bg-red-600 text-white rounded-xl text-xs font-bold hover:bg-red-700"
+          >
+            Réinitialiser le cache local & recharger
+          </button>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
+export default function SafeAdminOrdersPage() {
+  return (
+    <ErrorBoundary>
+      <AdminOrdersPage />
+    </ErrorBoundary>
   );
 }
