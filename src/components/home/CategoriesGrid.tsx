@@ -32,16 +32,14 @@ export function CategoriesGrid() {
   useEffect(() => {
     async function loadCategories() {
       const fallbackCats = [
-        { id: "coffee", name: { fr: "Café" }, icon: "☕" },
-        { id: "cold-drinks", name: { fr: "Boissons froides" }, icon: "🧊" },
-        { id: "breakfast", name: { fr: "Petit déjeuner" }, icon: "🥐" },
-        { id: "burgers", name: { fr: "Burgers" }, icon: "🍔" },
-        { id: "sandwiches", name: { fr: "Sandwichs" }, icon: "🥪" },
-        { id: "pizza", name: { fr: "Pizza" }, icon: "🍕" },
-        { id: "desserts", name: { fr: "Desserts" }, icon: "🍰" },
-        { id: "salads", name: { fr: "Salades" }, icon: "🥗" },
-        { id: "snacks-sales", name: { fr: "Snacks" }, icon: "🍿" },
-      ];
+        { id: "coffee", name: { fr: "Boissons chaudes" }, icon: "☕" },
+        { id: "cold-drinks", name: { fr: "Boissons fresh" }, icon: "🧊" },
+        { id: "mocktails", name: { fr: "Mocktail" }, icon: "🍹" },
+        { id: "smoothies", name: { fr: "Smoothies" }, icon: "🥑" },
+        { id: "milkshakes", name: { fr: "Milkshakes" }, icon: "🥤" },
+        { id: "desserts", name: { fr: "Gâteaux (viennoiserie)" }, icon: "🍰" },
+        { id: "snacks-sales", name: { fr: "Salés" }, icon: "🍕" },
+      ]
 
       try {
         if (!isSupabaseConfigured()) {

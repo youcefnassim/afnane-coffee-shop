@@ -39,15 +39,13 @@ export default function NewProductPage() {
           }
         } else {
           const mapped = [
-            { id: "coffee", name: "Café" },
-            { id: "breakfast", name: "Petit Déjeuner" },
-            { id: "cold-drinks", name: "Boissons froides" },
-            { id: "sandwiches", name: "Sandwichs" },
-            { id: "burgers", name: "Burgers" },
-            { id: "pizza", name: "Pizza" },
-            { id: "desserts", name: "Desserts" },
-            { id: "salads", name: "Salades" },
-            { id: "snacks-sales", name: "Snacks" },
+            { id: "coffee", name: "Boissons chaudes" },
+            { id: "cold-drinks", name: "Boissons fresh" },
+            { id: "mocktails", name: "Mocktail" },
+            { id: "smoothies", name: "Smoothies" },
+            { id: "milkshakes", name: "Milkshakes" },
+            { id: "desserts", name: "Gâteaux (viennoiserie)" },
+            { id: "snacks-sales", name: "Salés" },
           ];
           setCategories(mapped);
           if (mapped.length > 0) {
@@ -56,15 +54,13 @@ export default function NewProductPage() {
         }
       } catch (e) {
         const mapped = [
-          { id: "coffee", name: "Café" },
-          { id: "breakfast", name: "Petit Déjeuner" },
-          { id: "cold-drinks", name: "Boissons froides" },
-          { id: "sandwiches", name: "Sandwichs" },
-          { id: "burgers", name: "Burgers" },
-          { id: "pizza", name: "Pizza" },
-          { id: "desserts", name: "Desserts" },
-          { id: "salads", name: "Salades" },
-          { id: "snacks-sales", name: "Snacks" },
+          { id: "coffee", name: "Boissons chaudes" },
+          { id: "cold-drinks", name: "Boissons fresh" },
+          { id: "mocktails", name: "Mocktail" },
+          { id: "smoothies", name: "Smoothies" },
+          { id: "milkshakes", name: "Milkshakes" },
+          { id: "desserts", name: "Gâteaux (viennoiserie)" },
+          { id: "snacks-sales", name: "Salés" },
         ];
         setCategories(mapped);
         if (mapped.length > 0) {

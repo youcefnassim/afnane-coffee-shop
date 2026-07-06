@@ -24,100 +24,14 @@ interface AdminCategory {
 }
 
 const DEFAULT_CATEGORIES: AdminCategory[] = [
-  { id: "coffee", name: "Café", icon: "☕", itemCount: 0, status: "Active" },
-  { id: "cold-drinks", name: "Boissons froides", icon: "🧊", itemCount: 0, status: "Active" },
-  { id: "breakfast", name: "Petit déjeuner", icon: "🥐", itemCount: 0, status: "Active" },
-  { id: "burgers", name: "Burgers", icon: "🍔", itemCount: 0, status: "Active" },
-  { id: "sandwiches", name: "Sandwichs", icon: "🥪", itemCount: 0, status: "Active" },
-  { id: "pizza", name: "Pizza", icon: "🍕", itemCount: 0, status: "Active" },
-  { id: "desserts", name: "Desserts", icon: "🍰", itemCount: 0, status: "Active" },
-  { id: "salads", name: "Salades", icon: "🥗", itemCount: 0, status: "Active" },
-  { id: "snacks-sales", name: "Snacks", icon: "🍿", itemCount: 0, status: "Active" },
-];
-
-export default function AdminCategoriesPage() {
-  const [search, setSearch] = useState("");
-  const [categories, setCategories] = useState<AdminCategory[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [modalOpen, setModalOpen] = useState(false);
-  const [editingCategory, setEditingCategory] = useState<AdminCategory | null>(null);
-
-  // Form states
-  const [name, setName] = useState("");
-  const [icon, setIcon] = useState("☕");
-  const [status, setStatus] = useState<"Active" | "Inactive">("Active");
-
-  useEffect(() => {
-    loadCategoriesData();
-  }, []);
-
-  const loadCategoriesData = async () => {
-    setIsLoading(true);
-    if (!isSupabaseConfigured()) {
-      try {
-        const local = localStorage.getItem("afnene_categories");
-        if (local) {
-          setCategories(JSON.parse(local));
-        } else {
-          setCategories(DEFAULT_CATEGORIES);
-        }
-      } catch (e) {
-        setCategories(DEFAULT_CATEGORIES);
-      } finally {
-        setIsLoading(false);
-      }
-      return;
-    }
-
-    try {
-      const { data: cats, error: catError } = await supabase
-        .from("categories")
-        .select("*")
-        .order("sort_order", { ascending: true });
-
-      if (catError) throw catError;
-
-      const { data: prods, error: prodError } = await supabase
-        .from("products")
-        .select("category_id");
-
-      if (prodError) throw prodError;
-
-      const counts: Record<string, number> = {};
-      (prods || []).forEach((p: any) => {
-        if (p.category_id) {
-          counts[p.category_id] = (counts[p.category_id] || 0) + 1;
-        }
-      });
-
-      if (cats) {
-        const mapped: AdminCategory[] = cats.map((c: any) => ({
-          id: c.id,
-          name: typeof c.name === "object" ? (c.name?.fr || c.name?.en || "") : c.name || "",
-          icon: c.icon || "☕",
-          itemCount: counts[c.id] || 0,
-          status: "Active",
-        }));
-        setCategories(mapped);
-      }
-    } catch (err: any) {
-      console.error("Failed to load categories:", err);
-      toast.error(`Erreur de chargement : ${err.message || err}`);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const updateCategoryOrder = async (id: string, direction: "up" | "down") => {
-    const idx = categories.findIndex((c) => c.id === id);
-    if (idx === -1) return;
-
-    if (direction === "up" && idx === 0) return;
-    if (direction === "down" && idx === categories.length - 1) return;
-
-    const targetIdx = direction === "up" ? idx - 1 : idx + 1;
-    
-    const newCategories = [...categories];
+  { id: "coffee", name: "Boissons chaudes", icon: "☕", itemCount: 0, status: "Active" },
+  { id: "cold-drinks", name: "Boissons fresh", icon: "🧊", itemCount: 0, status: "Active" },
+  { id: "mocktails", name: "Mocktail", icon: "🍹", itemCount: 0, status: "Active" },
+  { id: "smoothies", name: "Smoothies", icon: "🥑", itemCount: 0, status: "Active" },
+  { id: "milkshakes", name: "Milkshakes", icon: "🥤", itemCount: 0, status: "Active" },
+  { id: "desserts", name: "Gâteaux (viennoiserie)", icon: "🍰", itemCount: 0, status: "Active" },
+  { id: "snacks-sales", name: "Salés", icon: "🍕", itemCount: 0, status: "Active" },
+]
     const temp = newCategories[idx];
     newCategories[idx] = newCategories[targetIdx];
     newCategories[targetIdx] = temp;

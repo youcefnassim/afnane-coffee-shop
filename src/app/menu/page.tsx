@@ -26,16 +26,14 @@ import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 
 const FALLBACK_CATEGORIES = [
   { id: "all", name: "Tous", icon: "🍽️" },
-  { id: "coffee", name: "Café", icon: "☕" },
-  { id: "breakfast", name: "Petit Déjeuner", icon: "🥐" },
-  { id: "cold-drinks", name: "Boissons froides", icon: "🧊" },
-  { id: "sandwiches", name: "Sandwichs", icon: "🥪" },
-  { id: "burgers", name: "Burgers", icon: "🍔" },
-  { id: "pizza", name: "Pizza", icon: "🍕" },
-  { id: "desserts", name: "Desserts", icon: "🍰" },
-  { id: "salads", name: "Salades", icon: "🥗" },
-  { id: "snacks-sales", name: "Snacks", icon: "🍿" },
-];
+  { id: "coffee", name: "Boissons chaudes", icon: "☕" },
+  { id: "cold-drinks", name: "Boissons fresh", icon: "🧊" },
+  { id: "mocktails", name: "Mocktail", icon: "🍹" },
+  { id: "smoothies", name: "Smoothies", icon: "🥑" },
+  { id: "milkshakes", name: "Milkshakes", icon: "🥤" },
+  { id: "desserts", name: "Gâteaux (viennoiserie)", icon: "🍰" },
+  { id: "snacks-sales", name: "Salés", icon: "🍕" },
+]
 
 type FilterType = "available" | "promotions" | "best_sellers";
 

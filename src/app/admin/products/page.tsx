@@ -45,28 +45,24 @@ export default function AdminProductsPage() {
           setCategories(parsed.map((c: any) => ({ id: c.id, name: typeof c.name === "object" ? (c.name?.fr || c.name?.en || c.id) : c.name || c.id })));
         } else {
           setCategories([
-            { id: "coffee", name: "Café" },
-            { id: "breakfast", name: "Petit Déjeuner" },
-            { id: "cold-drinks", name: "Boissons froides" },
-            { id: "sandwiches", name: "Sandwichs" },
-            { id: "burgers", name: "Burgers" },
-            { id: "pizza", name: "Pizza" },
-            { id: "desserts", name: "Desserts" },
-            { id: "salads", name: "Salades" },
-            { id: "snacks-sales", name: "Snacks" },
+            { id: "coffee", name: "Boissons chaudes" },
+            { id: "cold-drinks", name: "Boissons fresh" },
+            { id: "mocktails", name: "Mocktail" },
+            { id: "smoothies", name: "Smoothies" },
+            { id: "milkshakes", name: "Milkshakes" },
+            { id: "desserts", name: "Gâteaux (viennoiserie)" },
+            { id: "snacks-sales", name: "Salés" },
           ]);
         }
       } catch (e) {
         setCategories([
-          { id: "coffee", name: "Café" },
-          { id: "breakfast", name: "Petit Déjeuner" },
-          { id: "cold-drinks", name: "Boissons froides" },
-          { id: "sandwiches", name: "Sandwichs" },
-          { id: "burgers", name: "Burgers" },
-          { id: "pizza", name: "Pizza" },
-          { id: "desserts", name: "Desserts" },
-          { id: "salads", name: "Salades" },
-          { id: "snacks-sales", name: "Snacks" },
+          { id: "coffee", name: "Boissons chaudes" },
+          { id: "cold-drinks", name: "Boissons fresh" },
+          { id: "mocktails", name: "Mocktail" },
+          { id: "smoothies", name: "Smoothies" },
+          { id: "milkshakes", name: "Milkshakes" },
+          { id: "desserts", name: "Gâteaux (viennoiserie)" },
+          { id: "snacks-sales", name: "Salés" },
         ]);
       }
       return;
