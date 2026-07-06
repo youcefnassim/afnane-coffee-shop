@@ -366,7 +366,7 @@ export default function AdminOrdersPage() {
                         <Trash2 className="w-4 h-4" />
                       </button>
                       <span className="text-xs text-muted font-mono bg-black/5 dark:bg-white/5 px-2 py-0.5 rounded">
-                        #{order.id.slice(-4)}
+                        #{String(order.id).slice(-4)}
                       </span>
                     </div>
                   </div>
