@@ -53,6 +53,19 @@ export default function MenuPage() {
     setMounted(true);
     async function loadCategories() {
       if (!isSupabaseConfigured()) {
+        try {
+          const local = localStorage.getItem("afnene_categories");
+          if (local) {
+            const parsed = JSON.parse(local);
+            const mapped = parsed.map((c: any) => ({
+              id: c.id,
+              name: typeof c.name === "object" ? (c.name?.fr || c.name?.en || c.id) : c.name || c.id,
+              icon: c.icon || "🍽️"
+            }));
+            setCategories([{ id: "all", name: "Tous", icon: "🍽️" }, ...mapped]);
+            return;
+          }
+        } catch (e) {}
         setCategories(FALLBACK_CATEGORIES);
         return;
       }

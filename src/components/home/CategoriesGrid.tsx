@@ -43,6 +43,19 @@ export function CategoriesGrid() {
 
       try {
         if (!isSupabaseConfigured()) {
+          try {
+            const local = localStorage.getItem("afnene_categories");
+            if (local) {
+              const parsed = JSON.parse(local);
+              const mapped = parsed.map((c: any) => ({
+                id: c.id,
+                name: typeof c.name === "object" ? c.name : { fr: c.name },
+                icon: c.icon || "🍽️"
+              }));
+              setCategories(mapped);
+              return;
+            }
+          } catch (e) {}
           setCategories(fallbackCats);
           return;
         }

@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -13,6 +13,7 @@ import {
   ArrowDown,
 } from "lucide-react";
 import { toast } from "sonner";
+import { useProductStore } from "@/store/useProductStore";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 
 interface AdminCategory {
@@ -54,11 +55,28 @@ export default function AdminCategoriesPage() {
     if (!isSupabaseConfigured()) {
       try {
         const local = localStorage.getItem("afnene_categories");
+        let catsList = DEFAULT_CATEGORIES;
         if (local) {
-          setCategories(JSON.parse(local));
-        } else {
-          setCategories(DEFAULT_CATEGORIES);
+          try {
+            catsList = JSON.parse(local);
+          } catch (err) {}
         }
+
+        // Count products offline using Zustand store products
+        const localProds = useProductStore.getState().products || [];
+        const counts: Record<string, number> = {};
+        localProds.forEach((p: any) => {
+          if (p.category_id) {
+            counts[p.category_id] = (counts[p.category_id] || 0) + 1;
+          }
+        });
+
+        const mapped = catsList.map((c: any) => ({
+          ...c,
+          itemCount: counts[c.id] || 0
+        }));
+
+        setCategories(mapped);
       } catch (e) {
         setCategories(DEFAULT_CATEGORIES);
       } finally {
