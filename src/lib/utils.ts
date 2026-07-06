@@ -6,12 +6,13 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export function formatPrice(price: number): string {
+  const val = typeof price === "number" && !isNaN(price) && isFinite(price) ? price : 0;
   return new Intl.NumberFormat("fr-DZ", {
     style: "currency",
     currency: "DZD",
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
-  }).format(price);
+  }).format(val);
 }
 
 export function getInitials(name: string): string {

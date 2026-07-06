@@ -114,8 +114,9 @@ export default function AdminOrdersPage() {
   const [simItems, setSimItems] = useState<{ productId: string; quantity: number }[]>([]);
 
   const handleOpenSimulation = () => {
-    if (products && products.length > 0) {
-      setSimItems([{ productId: products[0].id, quantity: 1 }]);
+    const list = products || [];
+    if (list.length > 0) {
+      setSimItems([{ productId: list[0].id, quantity: 1 }]);
     } else {
       setSimItems([]);
     }
@@ -123,8 +124,9 @@ export default function AdminOrdersPage() {
   };
 
   const handleAddSimItem = () => {
-    if (products && products.length > 0) {
-      setSimItems([...simItems, { productId: products[0].id, quantity: 1 }]);
+    const list = products || [];
+    if (list.length > 0) {
+      setSimItems([...simItems, { productId: list[0].id, quantity: 1 }]);
     }
   };
 
@@ -147,8 +149,11 @@ export default function AdminOrdersPage() {
 
     let total = 0;
     const orderItems = simItems.map((item, i) => {
-      const prod = products.find((p) => p.id === item.productId);
-      const name = prod ? prod.name : "Produit inconnu";
+      const prod = (products || []).find((p) => p.id === item.productId);
+      const rawName = prod ? prod.name : "Produit inconnu";
+      const name = typeof rawName === "object"
+        ? ((rawName as any)?.fr || (rawName as any)?.en || Object.values(rawName)[0] || "Produit inconnu")
+        : String(rawName || "Produit inconnu");
       const price = prod ? prod.price : 0;
       const itemTotal = price * item.quantity;
       total += itemTotal;
@@ -635,7 +640,7 @@ export default function AdminOrdersPage() {
                   ) : (
                     <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
                       {simItems.map((item, idx) => {
-                        const selectedProd = products.find(p => p.id === item.productId);
+                        const selectedProd = (products || []).find(p => p.id === item.productId);
                         const itemPrice = selectedProd ? selectedProd.price : 0;
                         return (
                           <div key={idx} className="flex flex-col sm:flex-row gap-2 pb-3 sm:pb-0 border-b border-border/30 sm:border-none sm:items-center">
@@ -645,11 +650,16 @@ export default function AdminOrdersPage() {
                               onChange={(e) => handleSimItemChange(idx, "productId", e.target.value)}
                               className="w-full sm:flex-1 px-3 py-2 rounded-xl border border-border dark:border-border-dark bg-background dark:bg-white/5 text-dark dark:text-white text-sm focus:outline-none"
                             >
-                              {products.map(p => (
-                                <option key={p.id} value={p.id}>
-                                  {p.name} ({p.price} DA)
-                                </option>
-                              ))}
+                              {(products || []).map(p => {
+                                const prodName = typeof p.name === "object"
+                                  ? ((p.name as any)?.fr || (p.name as any)?.en || Object.values(p.name)[0] || "")
+                                  : p.name || "";
+                                return (
+                                  <option key={p.id} value={p.id}>
+                                    {prodName} ({p.price} DA)
+                                  </option>
+                                );
+                              })}
                             </select>
 
                             {/* Controls Wrapper */}
@@ -690,7 +700,7 @@ export default function AdminOrdersPage() {
                   <span className="text-sm font-bold text-dark dark:text-white">Montant Total :</span>
                   <span className="text-lg font-bold text-primary">
                     {simItems.reduce((acc, item) => {
-                      const prod = products.find(p => p.id === item.productId);
+                      const prod = (products || []).find(p => p.id === item.productId);
                       return acc + (prod ? prod.price * item.quantity : 0);
                     }, 0)} DA
                   </span>
