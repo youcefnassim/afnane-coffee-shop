@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Plus, Trash2, Image as ImageIcon, Video, X, Upload } from "lucide-react";
 import { toast } from "sonner";
-import { supabase } from "@/lib/supabase";
+import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 import { uploadMedia, deleteMedia } from "@/lib/storage";
 
 export default function AdminGalleryPage() {
@@ -22,6 +22,14 @@ export default function AdminGalleryPage() {
   }, []);
 
   const fetchGallery = async () => {
+    if (!isSupabaseConfigured()) {
+      try {
+        const local = localStorage.getItem("afnene_gallery");
+        if (local) setMedia(JSON.parse(local));
+      } catch (e) {}
+      return;
+    }
+
     try {
       const { data, error } = await supabase
         .from("gallery")
@@ -30,9 +38,9 @@ export default function AdminGalleryPage() {
 
       if (error) throw error;
       if (data) setMedia(data);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching gallery:", error);
-      toast.error("Erreur lors du chargement de la galerie");
+      toast.error(`Erreur lors du chargement: ${error.message || error}`);
     }
   };
 
@@ -46,6 +54,29 @@ export default function AdminGalleryPage() {
       const file = files[0];
       const isVideo = file.type.startsWith("video");
       setIsUploading(true);
+
+      if (!isSupabaseConfigured()) {
+        try {
+          const url = URL.createObjectURL(file);
+          const newItem = {
+            id: `local-${Date.now()}`,
+            type: isVideo ? "video" : "image",
+            category: newCategory,
+            url,
+            caption: file.name,
+          };
+          const newMedia = [newItem, ...media];
+          setMedia(newMedia);
+          localStorage.setItem("afnene_gallery", JSON.stringify(newMedia));
+          setIsModalOpen(false);
+          toast.success("Média ajouté localement !");
+        } catch (e) {
+          toast.error("Erreur d'ajout local");
+        } finally {
+          setIsUploading(false);
+        }
+        return;
+      }
 
       try {
         toast.loading("Upload en cours...", { id: "upload" });
@@ -74,9 +105,9 @@ export default function AdminGalleryPage() {
         setMedia([data, ...media]);
         setIsModalOpen(false);
         toast.success(`${isVideo ? "Vidéo" : "Photo"} ajoutée à la galerie !`, { id: "upload" });
-      } catch (error) {
+      } catch (error: any) {
         console.error("Error adding media:", error);
-        toast.error("Erreur lors de l'ajout", { id: "upload" });
+        toast.error(`Erreur d'ajout: ${error.message || error}`, { id: "upload" });
       } finally {
         setIsUploading(false);
       }
@@ -86,6 +117,14 @@ export default function AdminGalleryPage() {
   const handleDelete = async (id: string, url: string) => {
     if (!confirm("Voulez-vous vraiment supprimer ce média ?")) return;
     
+    if (!isSupabaseConfigured()) {
+      const newMedia = media.filter(m => m.id !== id);
+      setMedia(newMedia);
+      localStorage.setItem("afnene_gallery", JSON.stringify(newMedia));
+      toast.success("Média supprimé localement");
+      return;
+    }
+
     const toastId = toast.loading("Suppression...");
     try {
       // 1. Delete from DB first to ensure permission/RLS allows it
@@ -102,7 +141,7 @@ export default function AdminGalleryPage() {
       }
 
       // 2. Delete from Storage if it's in our bucket and DB deletion succeeded
-      if (url.includes("afnene-media")) {
+      if (url && url.includes("afnene-media")) {
         await deleteMedia(url);
       }
 

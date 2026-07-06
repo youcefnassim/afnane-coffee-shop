@@ -15,7 +15,15 @@ export async function uploadMedia(file: File, folder: string = "general"): Promi
         upsert: false,
       });
 
-    if (error) throw error;
+    if (error) {
+      if (error.message.includes("Bucket not found") || error.message.includes("relation \"storage.buckets\" does not exist")) {
+        throw new Error("Le bucket 'afnene-media' n'existe pas dans Supabase. Veuillez le créer dans le Dashboard Storage et le rendre public.");
+      }
+      if (error.message.includes("new row violates row-level security policy")) {
+         throw new Error("Erreur de permission (RLS). Vérifiez que vous êtes connecté et que les Storage Policies autorisent l'upload.");
+      }
+      throw error;
+    }
 
     const { data: { publicUrl } } = supabase.storage
       .from("afnene-media")

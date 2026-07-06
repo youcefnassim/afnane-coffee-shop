@@ -7,7 +7,7 @@ import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { AnimationWrapper } from "@/components/shared/AnimationWrapper";
 
-import { supabase } from "@/lib/supabase";
+import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 
 const GALLERY_FILTERS = [
   { id: "all", label: "All" },
@@ -27,6 +27,15 @@ export default function GalleryPage() {
 
   useEffect(() => {
     const fetchGallery = async () => {
+      if (!isSupabaseConfigured()) {
+        try {
+          const local = localStorage.getItem("afnene_gallery");
+          if (local) setGalleryItems(JSON.parse(local));
+        } catch (e) {}
+        setIsLoading(false);
+        return;
+      }
+
       try {
         const { data, error } = await supabase
           .from("gallery")
