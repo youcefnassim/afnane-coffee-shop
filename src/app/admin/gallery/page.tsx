@@ -86,25 +86,31 @@ export default function AdminGalleryPage() {
   const handleDelete = async (id: string, url: string) => {
     if (!confirm("Voulez-vous vraiment supprimer ce média ?")) return;
     
+    const toastId = toast.loading("Suppression...");
     try {
-      // 1. Delete from Storage if it's in our bucket
+      // 1. Delete from DB first to ensure permission/RLS allows it
+      const { data, error } = await supabase
+        .from("gallery")
+        .delete()
+        .eq("id", id)
+        .select();
+
+      if (error) throw error;
+
+      if (!data || data.length === 0) {
+        throw new Error("Action non autorisée ou média introuvable. Veuillez vérifier vos accès.");
+      }
+
+      // 2. Delete from Storage if it's in our bucket and DB deletion succeeded
       if (url.includes("afnene-media")) {
         await deleteMedia(url);
       }
 
-      // 2. Delete from DB
-      const { error } = await supabase
-        .from("gallery")
-        .delete()
-        .eq("id", id);
-
-      if (error) throw error;
-
       setMedia(media.filter(m => m.id !== id));
-      toast.info("Média supprimé de la galerie");
-    } catch (error) {
+      toast.success("Média supprimé de la galerie", { id: toastId });
+    } catch (error: any) {
       console.error("Error deleting media:", error);
-      toast.error("Erreur lors de la suppression");
+      toast.error(`Erreur lors de la suppression : ${error.message || error}`, { id: toastId });
     }
   };
 

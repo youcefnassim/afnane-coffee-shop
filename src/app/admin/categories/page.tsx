@@ -191,12 +191,17 @@ export default function AdminCategoriesPage() {
 
       const toastId = toast.loading("Suppression...");
       try {
-        const { error } = await supabase
+        const { data, error } = await supabase
           .from("categories")
           .delete()
-          .eq("id", id);
+          .eq("id", id)
+          .select();
 
         if (error) throw error;
+
+        if (!data || data.length === 0) {
+          throw new Error("Action non autorisée ou catégorie introuvable. Veuillez vérifier que vous êtes bien authentifié et que la catégorie ne contient pas de produits.");
+        }
 
         setCategories((prev) => prev.filter((c) => c.id !== id));
         toast.success(`Catégorie "${catName}" supprimée avec succès`, { id: toastId });

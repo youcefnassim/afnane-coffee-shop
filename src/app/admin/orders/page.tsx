@@ -50,11 +50,13 @@ const STATUS_CONFIG: Record<OrderStatus, { label: string; color: string; bg: str
 
 export default function AdminOrdersPage() {
   const { products } = useProductStore();
-  const [orders, setOrders] = useState<Order[]>(INITIAL_MOCK_ORDERS);
+  const [orders, setOrders] = useState<Order[]>([]);
   const [filter, setFilter] = useState<OrderStatus | "all">("all");
   const [printingOrder, setPrintingOrder] = useState<Order | null>(null);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
     const saved = localStorage.getItem("afnene_orders");
     if (saved) {
       try {
@@ -63,6 +65,7 @@ export default function AdminOrdersPage() {
         setOrders(INITIAL_MOCK_ORDERS);
       }
     } else {
+      setOrders(INITIAL_MOCK_ORDERS);
       localStorage.setItem("afnene_orders", JSON.stringify(INITIAL_MOCK_ORDERS));
     }
   }, []);
@@ -99,16 +102,13 @@ export default function AdminOrdersPage() {
   const [simName, setSimName] = useState("Yassine Mansouri");
   const [simPhone, setSimPhone] = useState("0770 45 67 89");
   const [simType, setSimType] = useState<"dine_in" | "take_away" | "click_and_collect">("click_and_collect");
-  const [simTable, setSimTable] = useState("4");
-  const [simPickup, setSimPickup] = useState("Dans 20 min");
+  const [simTable, setSimTable] = useState("1");
+  const [simPickup, setSimPickup] = useState("Dans 15 min");
   const [simItems, setSimItems] = useState<{ productId: string; quantity: number }[]>([]);
 
   const handleOpenSimulation = () => {
-    const availableProducts = useProductStore.getState().products || [];
-    if (availableProducts.length > 0) {
-      setSimItems([
-        { productId: availableProducts[0].id, quantity: 1 }
-      ]);
+    if (products && products.length > 0) {
+      setSimItems([{ productId: products[0].id, quantity: 1 }]);
     } else {
       setSimItems([]);
     }
@@ -116,35 +116,32 @@ export default function AdminOrdersPage() {
   };
 
   const handleAddSimItem = () => {
-    const availableProducts = useProductStore.getState().products || [];
-    if (availableProducts.length > 0) {
-      setSimItems((prev) => [...prev, { productId: availableProducts[0].id, quantity: 1 }]);
+    if (products && products.length > 0) {
+      setSimItems([...simItems, { productId: products[0].id, quantity: 1 }]);
     }
   };
 
-  const handleRemoveSimItem = (idx: number) => {
-    setSimItems((prev) => prev.filter((_, i) => i !== idx));
+  const handleRemoveSimItem = (index: number) => {
+    setSimItems(simItems.filter((_, i) => i !== index));
   };
 
-  const handleSimItemChange = (idx: number, field: "productId" | "quantity", value: any) => {
-    setSimItems((prev) =>
-      prev.map((item, i) => (i === idx ? { ...item, [field]: value } : item))
-    );
+  const handleSimItemChange = (index: number, field: "productId" | "quantity", value: any) => {
+    const next = [...simItems];
+    next[index] = { ...next[index], [field]: value };
+    setSimItems(next);
   };
 
   const handleSimulateSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (simItems.length === 0) {
-      toast.error("Veuillez ajouter au moins un produit à la commande");
+      toast.error("Veuillez ajouter au moins un produit");
       return;
     }
 
-    const availableProducts = useProductStore.getState().products || [];
-    
     let total = 0;
     const orderItems = simItems.map((item, i) => {
-      const prod = availableProducts.find((p) => p.id === item.productId);
-      const name = prod ? prod.name : "Produit Inconnu";
+      const prod = products.find((p) => p.id === item.productId);
+      const name = prod ? prod.name : "Produit inconnu";
       const price = prod ? prod.price : 0;
       const itemTotal = price * item.quantity;
       total += itemTotal;
@@ -205,6 +202,15 @@ export default function AdminOrdersPage() {
   };
 
   const filteredOrders = filter === "all" ? orders : orders.filter((o) => o.status === filter);
+
+  if (!mounted) {
+    return (
+      <div className="p-4 sm:p-6 md:p-10 flex flex-col items-center justify-center min-h-[400px] text-muted">
+        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4" />
+        <p className="text-sm">Chargement des commandes...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="p-4 sm:p-6 md:p-10 space-y-8">

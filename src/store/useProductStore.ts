@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { supabase } from "@/lib/supabase";
+import { toast } from "sonner";
 
 export interface StoreProduct {
   id: string;
@@ -1419,6 +1420,7 @@ export const useProductStore = create<ProductState>()(
       },
 
       updateProduct: async (id, updated) => {
+        const previousProducts = get().products;
         // 1. Local update
         set((state) => ({
           products: state.products.map((p) => {
@@ -1453,15 +1455,21 @@ export const useProductStore = create<ProductState>()(
             if (updated.promotion !== undefined) updates.promotion = updated.promotion;
             if (updated.calories !== undefined) updates.calories = updated.calories || null;
 
-            const { error } = await supabase.from("products").update(updates).eq("id", id);
+            const { data, error } = await supabase.from("products").update(updates).eq("id", id).select();
             if (error) throw error;
-          } catch (err) {
+            if (!data || data.length === 0) {
+              throw new Error("Action non autorisée ou produit introuvable.");
+            }
+          } catch (err: any) {
             console.error("Failed to update product in Supabase:", err);
+            set({ products: previousProducts });
+            toast.error(`Erreur de mise à jour du produit : ${err.message || err}`);
           }
         }
       },
 
       deleteProduct: async (id) => {
+        const previousProducts = get().products;
         // 1. Local update
         set((state) => ({
           products: state.products.filter((p) => p.id !== id),
@@ -1470,10 +1478,15 @@ export const useProductStore = create<ProductState>()(
         // 2. Supabase update
         if (isSupabaseConfigured()) {
           try {
-            const { error } = await supabase.from("products").delete().eq("id", id);
+            const { data, error } = await supabase.from("products").delete().eq("id", id).select();
             if (error) throw error;
-          } catch (err) {
+            if (!data || data.length === 0) {
+              throw new Error("Action non autorisée ou produit introuvable.");
+            }
+          } catch (err: any) {
             console.error("Failed to delete product in Supabase:", err);
+            set({ products: previousProducts });
+            toast.error(`Erreur de suppression du produit : ${err.message || err}`);
           }
         }
       },
@@ -1483,6 +1496,7 @@ export const useProductStore = create<ProductState>()(
         if (!product) return;
 
         const newAvailability = !product.available;
+        const previousProducts = get().products;
 
         // 1. Local update
         set((state) => ({
@@ -1494,13 +1508,19 @@ export const useProductStore = create<ProductState>()(
         // 2. Supabase update
         if (isSupabaseConfigured()) {
           try {
-            const { error } = await supabase
+            const { data, error } = await supabase
               .from("products")
               .update({ available: newAvailability })
-              .eq("id", id);
+              .eq("id", id)
+              .select();
             if (error) throw error;
-          } catch (err) {
+            if (!data || data.length === 0) {
+              throw new Error("Action non autorisée ou produit introuvable.");
+            }
+          } catch (err: any) {
             console.error("Failed to toggle availability in Supabase:", err);
+            set({ products: previousProducts });
+            toast.error(`Erreur de modification de la disponibilité : ${err.message || err}`);
           }
         }
       },
