@@ -57,9 +57,9 @@ export default function AdminOrdersPage() {
 
   useEffect(() => {
     setMounted(true);
-    const saved = localStorage.getItem("afnene_orders");
-    if (saved) {
-      try {
+    try {
+      const saved = localStorage.getItem("afnene_orders");
+      if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed)) {
           // Keep only valid order objects
@@ -68,12 +68,13 @@ export default function AdminOrdersPage() {
         } else {
           setOrders(INITIAL_MOCK_ORDERS);
         }
-      } catch (e) {
+      } else {
         setOrders(INITIAL_MOCK_ORDERS);
+        localStorage.setItem("afnene_orders", JSON.stringify(INITIAL_MOCK_ORDERS));
       }
-    } else {
+    } catch (e) {
+      console.error("Local storage error:", e);
       setOrders(INITIAL_MOCK_ORDERS);
-      localStorage.setItem("afnene_orders", JSON.stringify(INITIAL_MOCK_ORDERS));
     }
   }, []);
 
@@ -191,18 +192,28 @@ export default function AdminOrdersPage() {
   };
 
   const updateOrderStatus = (orderId: string, newStatus: OrderStatus) => {
-    const updated = orders.map((ord) => (ord.id === orderId ? { ...ord, status: newStatus } : ord));
-    setOrders(updated);
-    localStorage.setItem("afnene_orders", JSON.stringify(updated));
-    toast.info(`Statut de la commande mis à jour`);
+    try {
+      const updated = orders.map((ord) => (ord.id === orderId ? { ...ord, status: newStatus } : ord));
+      setOrders(updated);
+      localStorage.setItem("afnene_orders", JSON.stringify(updated));
+      toast.info(`Statut de la commande mis à jour`);
+    } catch (e) {
+      console.error(e);
+      toast.error("Erreur de sauvegarde locale");
+    }
   };
 
   const handleDeleteOrder = (orderId: string) => {
     if (window.confirm("Voulez-vous vraiment supprimer cette commande ?")) {
-      const updated = orders.filter((o) => o.id !== orderId);
-      setOrders(updated);
-      localStorage.setItem("afnene_orders", JSON.stringify(updated));
-      toast.success("Commande supprimée avec succès");
+      try {
+        const updated = orders.filter((o) => o.id !== orderId);
+        setOrders(updated);
+        localStorage.setItem("afnene_orders", JSON.stringify(updated));
+        toast.success("Commande supprimée avec succès");
+      } catch (e) {
+        console.error(e);
+        toast.error("Erreur de sauvegarde locale");
+      }
     }
   };
 
