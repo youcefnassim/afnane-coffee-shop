@@ -18,14 +18,17 @@ const isSupabaseConfigured = () => {
 export const useAuthStore = create<AuthState>()(
   persist(
     (set) => ({
-      isAuthenticated: !isSupabaseConfigured(), // Default to true if not configured yet so dev isn't blocked
-      userEmail: isSupabaseConfigured() ? null : "admin@afnene.com",
+      isAuthenticated: false, // Toujours demander une connexion par défaut
+      userEmail: null,
 
       login: async (email, pass) => {
         if (!isSupabaseConfigured()) {
-          // Dev fallback
-          set({ isAuthenticated: true, userEmail: email || "admin@afnene.com" });
-          return true;
+          // Mode local/fallback : Forcer les identifiants uniques
+          if (email === "admin@afnene.com" && pass === "Afnene3131@") {
+            set({ isAuthenticated: true, userEmail: email });
+            return true;
+          }
+          throw new Error("Identifiants incorrects");
         }
 
         const { data, error } = await supabase.auth.signInWithPassword({
