@@ -2,7 +2,7 @@
 
 import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ShoppingBag, Printer, Volume2, Plus, Phone, User, Utensils, X, Check, Coffee } from "lucide-react";
+import { ShoppingBag, Printer, Volume2, Plus, Phone, User, Utensils, X, Check, Coffee, Trash2 } from "lucide-react";
 import { Order, OrderStatus } from "@/types/database";
 import { formatPrice } from "@/lib/utils";
 import { toast } from "sonner";
@@ -173,6 +173,13 @@ export default function AdminOrdersPage() {
     toast.info(`Statut de la commande mis à jour`);
   };
 
+  const handleDeleteOrder = (orderId: string) => {
+    if (window.confirm("Voulez-vous vraiment supprimer cette commande ?")) {
+      setOrders((prev) => prev.filter((o) => o.id !== orderId));
+      toast.success("Commande supprimée avec succès");
+    }
+  };
+
   const handlePrint = (order: Order) => {
     setPrintingOrder(order);
     setTimeout(() => {
@@ -312,6 +319,13 @@ export default function AdminOrdersPage() {
                         title="Imprimer le ticket de caisse"
                       >
                         <Printer className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteOrder(order.id)}
+                        className="p-1.5 rounded-lg bg-danger/10 hover:bg-danger hover:text-white text-danger transition-colors"
+                        title="Supprimer la commande"
+                      >
+                        <Trash2 className="w-4 h-4" />
                       </button>
                       <span className="text-xs text-muted font-mono bg-black/5 dark:bg-white/5 px-2 py-0.5 rounded">
                         #{order.id.slice(-4)}
@@ -591,12 +605,12 @@ export default function AdminOrdersPage() {
                         const selectedProd = products.find(p => p.id === item.productId);
                         const itemPrice = selectedProd ? selectedProd.price : 0;
                         return (
-                          <div key={idx} className="flex gap-2 items-center">
+                          <div key={idx} className="flex flex-col sm:flex-row gap-2 pb-3 sm:pb-0 border-b border-border/30 sm:border-none sm:items-center">
                             {/* Product Selector */}
                             <select
                               value={item.productId}
                               onChange={(e) => handleSimItemChange(idx, "productId", e.target.value)}
-                              className="flex-1 px-3 py-2 rounded-xl border border-border dark:border-border-dark bg-background dark:bg-white/5 text-dark dark:text-white text-sm focus:outline-none"
+                              className="w-full sm:flex-1 px-3 py-2 rounded-xl border border-border dark:border-border-dark bg-background dark:bg-white/5 text-dark dark:text-white text-sm focus:outline-none"
                             >
                               {products.map(p => (
                                 <option key={p.id} value={p.id}>
@@ -605,29 +619,32 @@ export default function AdminOrdersPage() {
                               ))}
                             </select>
 
-                            {/* Quantity Selector */}
-                            <input
-                              type="number"
-                              required
-                              min="1"
-                              value={item.quantity}
-                              onChange={(e) => handleSimItemChange(idx, "quantity", parseInt(e.target.value) || 1)}
-                              className="w-20 px-3 py-2 rounded-xl border border-border dark:border-border-dark bg-background dark:bg-white/5 text-dark dark:text-white text-sm text-center focus:outline-none"
-                            />
+                            {/* Controls Wrapper */}
+                            <div className="flex items-center justify-between w-full sm:w-auto gap-2">
+                              {/* Quantity Selector */}
+                              <input
+                                type="number"
+                                required
+                                min="1"
+                                value={item.quantity}
+                                onChange={(e) => handleSimItemChange(idx, "quantity", parseInt(e.target.value) || 1)}
+                                className="w-16 px-2.5 py-1.5 rounded-xl border border-border dark:border-border-dark bg-background dark:bg-white/5 text-dark dark:text-white text-sm text-center focus:outline-none"
+                              />
 
-                            {/* Subtotal preview */}
-                            <div className="w-24 text-right text-xs font-semibold text-dark dark:text-white">
-                              {itemPrice * item.quantity} DA
+                              {/* Subtotal preview */}
+                              <div className="w-20 text-right text-xs font-semibold text-dark dark:text-white">
+                                {itemPrice * item.quantity} DA
+                              </div>
+
+                              {/* Delete line button */}
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveSimItem(idx)}
+                                className="w-9 h-9 rounded-xl border border-danger/30 hover:bg-danger/10 text-danger flex items-center justify-center transition-colors"
+                              >
+                                <X className="w-4 h-4" />
+                              </button>
                             </div>
-
-                            {/* Delete line button */}
-                            <button
-                              type="button"
-                              onClick={() => handleRemoveSimItem(idx)}
-                              className="w-9 h-9 rounded-xl border border-danger/30 hover:bg-danger/10 text-danger flex items-center justify-center transition-colors"
-                            >
-                              <X className="w-4 h-4" />
-                            </button>
                           </div>
                         );
                       })}
