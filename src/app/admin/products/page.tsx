@@ -84,9 +84,10 @@ export default function AdminProductsPage() {
 
   const filtered = products.filter(
     (p) =>
+      p &&
       (selectedCategoryId === "all" || p.category_id === selectedCategoryId) &&
-      (p.name.toLowerCase().includes(search.toLowerCase()) ||
-        p.category_id.toLowerCase().includes(search.toLowerCase()))
+      ((p.name || "").toLowerCase().includes(search.toLowerCase()) ||
+        (p.category_id || "").toLowerCase().includes(search.toLowerCase()))
   );
 
   const handleDragStart = (e: React.DragEvent, index: number) => {

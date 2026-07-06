@@ -303,7 +303,7 @@ export default function AdminCategoriesPage() {
   };
 
   const filtered = categories.filter((c) =>
-    c.name.toLowerCase().includes(search.toLowerCase())
+    c && c.name && c.name.toLowerCase().includes(search.toLowerCase())
   );
 
   return (

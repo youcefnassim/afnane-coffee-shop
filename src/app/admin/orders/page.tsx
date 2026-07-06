@@ -60,7 +60,14 @@ export default function AdminOrdersPage() {
     const saved = localStorage.getItem("afnene_orders");
     if (saved) {
       try {
-        setOrders(JSON.parse(saved));
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          // Keep only valid order objects
+          const validOrders = parsed.filter(o => o && typeof o === "object" && o.id);
+          setOrders(validOrders);
+        } else {
+          setOrders(INITIAL_MOCK_ORDERS);
+        }
       } catch (e) {
         setOrders(INITIAL_MOCK_ORDERS);
       }
@@ -319,7 +326,10 @@ export default function AdminOrdersPage() {
           </div>
         ) : (
           filteredOrders.map((order) => {
-            const statusCfg = STATUS_CONFIG[order.status];
+            if (!order || !order.id) return null;
+            const statusCfg = (order.status && STATUS_CONFIG[order.status])
+              ? STATUS_CONFIG[order.status]
+              : { label: "Inconnu", color: "text-muted", bg: "bg-gray-500/10 border-gray-500/20" };
 
             return (
               <motion.div
@@ -359,11 +369,11 @@ export default function AdminOrdersPage() {
                   <div className="space-y-1.5">
                     <div className="flex items-center gap-2 text-dark dark:text-white font-bold text-base">
                       <User className="w-4 h-4 text-primary shrink-0" />
-                      <span>{order.customer_name}</span>
+                      <span>{order.customer_name || "Client"}</span>
                     </div>
                     <div className="flex items-center gap-2 text-muted text-xs">
                       <Phone className="w-3.5 h-3.5" />
-                      <span>{order.customer_phone}</span>
+                      <span>{order.customer_phone || "N/A"}</span>
                     </div>
                     <div className="flex items-center gap-2 text-xs font-semibold text-secondary pt-1">
                       {order.order_type === "click_and_collect" ? (
