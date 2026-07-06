@@ -21,7 +21,6 @@ import { formatPrice } from "@/lib/utils";
 import { toast } from "sonner";
 import { useProductStore, StoreProduct } from "@/store/useProductStore";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
-import { MAMAKA_CATEGORIES } from "@/lib/afnene_data";
 
 export default function AdminProductsPage() {
   const [search, setSearch] = useState("");

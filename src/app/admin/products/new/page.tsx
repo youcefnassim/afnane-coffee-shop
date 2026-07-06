@@ -7,7 +7,6 @@ import Link from "next/link";
 import { toast } from "sonner";
 import { useProductStore } from "@/store/useProductStore";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
-import { MAMAKA_CATEGORIES } from "@/lib/afnene_data";
 
 export default function NewProductPage() {
   const router = useRouter();
