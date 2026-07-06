@@ -54,6 +54,19 @@ export default function AdminOrdersPage() {
   const [filter, setFilter] = useState<OrderStatus | "all">("all");
   const [printingOrder, setPrintingOrder] = useState<Order | null>(null);
 
+  useEffect(() => {
+    const saved = localStorage.getItem("afnene_orders");
+    if (saved) {
+      try {
+        setOrders(JSON.parse(saved));
+      } catch (e) {
+        setOrders(INITIAL_MOCK_ORDERS);
+      }
+    } else {
+      localStorage.setItem("afnene_orders", JSON.stringify(INITIAL_MOCK_ORDERS));
+    }
+  }, []);
+
   // Web Audio Synthesizer for order chime
   const playChime = () => {
     try {
@@ -160,22 +173,26 @@ export default function AdminOrdersPage() {
       items: orderItems,
     };
 
-    setOrders((prev) => [newOrd, ...prev]);
+    const updated = [newOrd, ...orders];
+    setOrders(updated);
+    localStorage.setItem("afnene_orders", JSON.stringify(updated));
     playChime();
     toast.success("🔔 NOUVELLE COMMANDE SIMULÉE ! (#" + newOrd.id.slice(-4) + ")");
     setSimulationModalOpen(false);
   };
 
   const updateOrderStatus = (orderId: string, newStatus: OrderStatus) => {
-    setOrders((prev) =>
-      prev.map((ord) => (ord.id === orderId ? { ...ord, status: newStatus } : ord))
-    );
+    const updated = orders.map((ord) => (ord.id === orderId ? { ...ord, status: newStatus } : ord));
+    setOrders(updated);
+    localStorage.setItem("afnene_orders", JSON.stringify(updated));
     toast.info(`Statut de la commande mis à jour`);
   };
 
   const handleDeleteOrder = (orderId: string) => {
     if (window.confirm("Voulez-vous vraiment supprimer cette commande ?")) {
-      setOrders((prev) => prev.filter((o) => o.id !== orderId));
+      const updated = orders.filter((o) => o.id !== orderId);
+      setOrders(updated);
+      localStorage.setItem("afnene_orders", JSON.stringify(updated));
       toast.success("Commande supprimée avec succès");
     }
   };
