@@ -36,34 +36,17 @@ export function MediaRenderer({
   const [hasError, setHasError] = useState(false);
   const [useNativeImg, setUseNativeImg] = useState(false);
 
-  const isBlobOrDataUrl = mediaUrl ? (mediaUrl.startsWith("blob:") || mediaUrl.startsWith("data:")) : false;
+  // Reset error and load state whenever the mediaUrl prop changes
+  useEffect(() => {
+    setHasError(false);
+    setIsLoaded(false);
+    setUseNativeImg(false);
+  }, [mediaUrl]);
 
-  if (!mediaUrl || (hasError && (useNativeImg || isBlobOrDataUrl))) {
-    return (
-      <div
-        className={`${aspectRatio} bg-gradient-to-br from-[var(--color-border)] to-[var(--color-background)] flex items-center justify-center ${className}`}
-      >
-        <div className="text-center text-[var(--color-muted)]">
-          <svg
-            className="w-10 h-10 mx-auto mb-2 opacity-40"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={1.5}
-              d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-            />
-          </svg>
-          <span className="text-xs">No media</span>
-        </div>
-      </div>
-    );
-  }
+  const effectiveUrl = hasError || !mediaUrl ? "/logo.jpg" : mediaUrl;
+  const isBlobOrDataUrl = effectiveUrl.startsWith("blob:") || effectiveUrl.startsWith("data:");
 
-  if (mediaType === "video") {
+  if (mediaType === "video" && !hasError && mediaUrl) {
     return (
       <div className={`${aspectRatio} relative overflow-hidden ${className}`}>
         <video
@@ -96,16 +79,18 @@ export function MediaRenderer({
     );
   }
 
-  // Image - Use native <img> for blob/data URLs or when Next Image fails
-  if (isBlobOrDataUrl || useNativeImg) {
+  // Image - Use native <img> for blob/data/local URLs or when Next Image fails
+  if (isBlobOrDataUrl || useNativeImg || effectiveUrl === "/logo.jpg") {
     return (
       <div className={`${fill ? "w-full h-full" : aspectRatio} relative overflow-hidden ${className}`}>
         <img
-          src={mediaUrl}
+          src={effectiveUrl}
           alt={alt}
           className={`w-full h-full object-${objectFit}`}
           onLoad={() => setIsLoaded(true)}
-          onError={() => setHasError(true)}
+          onError={() => {
+            if (!hasError) setHasError(true);
+          }}
         />
       </div>
     );
@@ -117,17 +102,17 @@ export function MediaRenderer({
         <div className="absolute inset-0 skeleton-shimmer z-10" />
       )}
       <Image
-        src={mediaUrl}
+        src={effectiveUrl}
         alt={alt}
         fill={fill || true}
         sizes={sizes}
         priority={priority}
+        unoptimized
         className={`object-${objectFit} transition-opacity duration-500 ${
           isLoaded ? "opacity-100" : "opacity-0"
         }`}
         onLoad={() => setIsLoaded(true)}
         onError={() => {
-          // Fall back to native <img> tag before marking as error
           setUseNativeImg(true);
         }}
       />
