@@ -34,8 +34,11 @@ export function MediaRenderer({
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isLoaded, setIsLoaded] = useState(false);
   const [hasError, setHasError] = useState(false);
+  const [useNativeImg, setUseNativeImg] = useState(false);
 
-  if (!mediaUrl || hasError) {
+  const isBlobOrDataUrl = mediaUrl ? (mediaUrl.startsWith("blob:") || mediaUrl.startsWith("data:")) : false;
+
+  if (!mediaUrl || (hasError && (useNativeImg || isBlobOrDataUrl))) {
     return (
       <div
         className={`${aspectRatio} bg-gradient-to-br from-[var(--color-border)] to-[var(--color-background)] flex items-center justify-center ${className}`}
@@ -93,7 +96,21 @@ export function MediaRenderer({
     );
   }
 
-  // Image
+  // Image - Use native <img> for blob/data URLs or when Next Image fails
+  if (isBlobOrDataUrl || useNativeImg) {
+    return (
+      <div className={`${fill ? "w-full h-full" : aspectRatio} relative overflow-hidden ${className}`}>
+        <img
+          src={mediaUrl}
+          alt={alt}
+          className={`w-full h-full object-${objectFit}`}
+          onLoad={() => setIsLoaded(true)}
+          onError={() => setHasError(true)}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className={`${fill ? "" : aspectRatio} relative overflow-hidden ${className}`}>
       {!isLoaded && (
@@ -109,7 +126,10 @@ export function MediaRenderer({
           isLoaded ? "opacity-100" : "opacity-0"
         }`}
         onLoad={() => setIsLoaded(true)}
-        onError={() => setHasError(true)}
+        onError={() => {
+          // Fall back to native <img> tag before marking as error
+          setUseNativeImg(true);
+        }}
       />
     </div>
   );
