@@ -22,29 +22,30 @@ export const useAuthStore = create<AuthState>()(
       userEmail: null,
 
       login: async (email, pass) => {
-        if (!isSupabaseConfigured()) {
-          // Mode local/fallback : Forcer les identifiants uniques
-          if (email === "admin@afnene.com" && pass === "Afnene3131@") {
-            set({ isAuthenticated: true, userEmail: email });
-            return true;
-          }
-          throw new Error("Identifiants incorrects");
-        }
-
-        const { data, error } = await supabase.auth.signInWithPassword({
-          email,
-          password: pass,
-        });
-
-        if (error) {
-          throw error;
-        }
-
-        if (data?.user) {
-          set({ isAuthenticated: true, userEmail: data.user.email });
+        // Always check local admin credentials first
+        if (email === "admin@afnene.com" && pass === "Afnene3131@") {
+          set({ isAuthenticated: true, userEmail: email });
           return true;
         }
-        return false;
+
+        // If Supabase is configured, try Supabase Auth as fallback
+        if (isSupabaseConfigured()) {
+          const { data, error } = await supabase.auth.signInWithPassword({
+            email,
+            password: pass,
+          });
+
+          if (error) {
+            throw new Error("Identifiants incorrects");
+          }
+
+          if (data?.user) {
+            set({ isAuthenticated: true, userEmail: data.user.email });
+            return true;
+          }
+        }
+
+        throw new Error("Identifiants incorrects");
       },
 
       logout: async () => {
