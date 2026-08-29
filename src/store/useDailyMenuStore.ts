@@ -98,10 +98,9 @@ export const useDailyMenuStore = create<DailyMenuState>()(
               .from("daily_menu")
               .upsert(dbPayload, { onConflict: "id" });
 
-            if (error) throw error;
+            if (error) console.error("Supabase daily menu update error:", error);
           } catch (err: any) {
             console.error("Failed to update daily menu in Supabase:", err);
-            throw err;
           }
         }
       },

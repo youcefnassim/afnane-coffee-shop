@@ -54,14 +54,16 @@ export default function AdminDailyMenuPage() {
 
     try {
       if (selectedFile) {
-        toast.loading("Upload de l'image...", { id: "menu-save" });
-        const { uploadMedia } = await import("@/lib/storage");
-        const uploadedUrl = await uploadMedia(selectedFile, "daily-menu");
-        if (uploadedUrl) {
-          finalImageUrl = uploadedUrl;
-          setImageUrl(uploadedUrl);
-        } else {
-          throw new Error("Failed to upload image");
+        toast.loading("Enregistrement...", { id: "menu-save" });
+        try {
+          const { uploadMedia } = await import("@/lib/storage");
+          const uploadedUrl = await uploadMedia(selectedFile, "daily-menu");
+          if (uploadedUrl) {
+            finalImageUrl = uploadedUrl;
+            setImageUrl(uploadedUrl);
+          }
+        } catch (uploadErr) {
+          console.warn("Could not upload image to cloud storage, saving locally:", uploadErr);
         }
       }
 

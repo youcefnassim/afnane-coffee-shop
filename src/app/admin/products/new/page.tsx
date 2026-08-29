@@ -111,19 +111,16 @@ export default function NewProductPage() {
 
     try {
       if (selectedFile) {
-        const { isSupabaseConfigured } = await import("@/lib/supabase");
-        if (!isSupabaseConfigured()) {
-          finalMediaUrl = mediaUrl; // fallback to local ObjectURL
-        } else {
-          toast.loading("Upload du média...", { id: "product-save" });
+        toast.loading("Enregistrement du produit...", { id: "product-save" });
+        try {
           const { uploadMedia } = await import("@/lib/storage");
           const uploadedUrl = await uploadMedia(selectedFile, "products");
           if (uploadedUrl) {
             finalMediaUrl = uploadedUrl;
             setMediaUrl(uploadedUrl);
-          } else {
-            throw new Error("Failed to upload media");
           }
+        } catch (uploadErr) {
+          console.warn("Could not upload product media to cloud storage, saving locally:", uploadErr);
         }
       }
 
