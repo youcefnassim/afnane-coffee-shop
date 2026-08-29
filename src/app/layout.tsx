@@ -68,6 +68,9 @@ export const metadata: Metadata = {
     statusBarStyle: "black-translucent",
     title: "AFNENE Coffee",
   },
+  verification: {
+    google: "google6b97735c2273562d",
+  },
 };
 
 export const viewport: Viewport = {
