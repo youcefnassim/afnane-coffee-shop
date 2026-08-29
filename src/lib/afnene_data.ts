@@ -992,6 +992,7 @@ export const MAMAKA_PRODUCTS = [
     promotion: false,
     ingredients: { fr: "Thé noir, sirop de pêche, eau, glaçons", en: "Black tea, peach syrup, water, ice", ar: "شاي أسود، شراب الخوخ، ماء، ثلج" }
   },
+  
   {
     category_id: "mocktails",
     name: { fr: "Mojito Énergétique", en: "Energy Mojito", ar: "موخيتو طاقة" },
