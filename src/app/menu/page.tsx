@@ -26,6 +26,7 @@ import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 
 const FALLBACK_CATEGORIES = [
   { id: "all", name: "Tous", icon: "🍽️" },
+  { id: "brunchs", name: "Brunchs", icon: "🥐" },
   { id: "coffee", name: "Boissons chaudes", icon: "☕" },
   { id: "cold-drinks", name: "Boissons fresh", icon: "🧊" },
   { id: "mocktails", name: "Mocktail", icon: "🍹" },

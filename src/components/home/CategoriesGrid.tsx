@@ -32,6 +32,7 @@ export function CategoriesGrid() {
   useEffect(() => {
     async function loadCategories() {
       const fallbackCats = [
+        { id: "brunchs", name: { fr: "Brunchs" }, icon: "🥐" },
         { id: "coffee", name: { fr: "Boissons chaudes" }, icon: "☕" },
         { id: "cold-drinks", name: { fr: "Boissons fresh" }, icon: "🧊" },
         { id: "mocktails", name: { fr: "Mocktail" }, icon: "🍹" },

@@ -1,21 +1,62 @@
 export const MAMAKA_CATEGORIES = [
-  { id: "pizza-sandwich", name: { fr: "Pizza & Sandwich", en: "Pizza & Sandwich", ar: "بيتزا وسندويش" }, icon: "🍕", sort_order: 1 },
-  { id: "sucre", name: { fr: "Sucré", en: "Sweet", ar: "حلويات" }, icon: "🍰", sort_order: 2 },
-  { id: "sale", name: { fr: "Salé", en: "Savory", ar: "موالح" }, icon: "🍔", sort_order: 3 },
-  { id: "salades", name: { fr: "Salades", en: "Salads", ar: "سلطات" }, icon: "🥗", sort_order: 4 },
-  { id: "cafe", name: { fr: "Café", en: "Coffee", ar: "قهوة" }, icon: "☕", sort_order: 5 },
-  { id: "matcha", name: { fr: "Matcha", en: "Matcha", ar: "ماتشا" }, icon: "🍵", sort_order: 6 },
-  { id: "ube", name: { fr: "Ubé", en: "Ube", ar: "أوبي" }, icon: "🍠", sort_order: 7 },
-  { id: "milkshakes", name: { fr: "Milkshakes", en: "Milkshakes", ar: "ميلك شيك" }, icon: "🥤", sort_order: 8 },
-  { id: "smoothies-bowls", name: { fr: "Smoothies & Bowls", en: "Smoothies & Bowls", ar: "سموذي وبول" }, icon: "🥑", sort_order: 9 },
-  { id: "frappes", name: { fr: "Frappés", en: "Frappés", ar: "فرابيه" }, icon: "🧊", sort_order: 10 },
-  { id: "toasts", name: { fr: "Toasts", en: "Toasts", ar: "توست" }, icon: "🍞", sort_order: 11 },
-  { id: "omelettes", name: { fr: "Omelettes", en: "Omelettes", ar: "أومليت" }, icon: "🍳", sort_order: 12 },
-  { id: "mocktails", name: { fr: "Mocktails", en: "Mocktails", ar: "موكتيل" }, icon: "🍹", sort_order: 13 },
-  { id: "jus-presses", name: { fr: "Jus Pressés & Détox", en: "Fresh Juice & Detox", ar: "عصائر طبيعية" }, icon: "🍊", sort_order: 14 }
+  { id: "brunchs", name: { fr: "Brunchs", en: "Brunchs", ar: "برانش" }, icon: "🥐", sort_order: 1 },
+  { id: "pizza-sandwich", name: { fr: "Pizza & Sandwich", en: "Pizza & Sandwich", ar: "بيتزا وسندويش" }, icon: "🍕", sort_order: 2 },
+  { id: "sucre", name: { fr: "Sucré", en: "Sweet", ar: "حلويات" }, icon: "🍰", sort_order: 3 },
+  { id: "sale", name: { fr: "Salé", en: "Savory", ar: "موالح" }, icon: "🍔", sort_order: 4 },
+  { id: "salades", name: { fr: "Salades", en: "Salads", ar: "سلطات" }, icon: "🥗", sort_order: 5 },
+  { id: "cafe", name: { fr: "Café", en: "Coffee", ar: "قهوة" }, icon: "☕", sort_order: 6 },
+  { id: "matcha", name: { fr: "Matcha", en: "Matcha", ar: "ماتشا" }, icon: "🍵", sort_order: 7 },
+  { id: "ube", name: { fr: "Ubé", en: "Ube", ar: "أوبي" }, icon: "🍠", sort_order: 8 },
+  { id: "milkshakes", name: { fr: "Milkshakes", en: "Milkshakes", ar: "ميلك شيك" }, icon: "🥤", sort_order: 9 },
+  { id: "smoothies-bowls", name: { fr: "Smoothies & Bowls", en: "Smoothies & Bowls", ar: "سموذي وبول" }, icon: "🥑", sort_order: 10 },
+  { id: "frappes", name: { fr: "Frappés", en: "Frappés", ar: "فرابيه" }, icon: "🧊", sort_order: 11 },
+  { id: "toasts", name: { fr: "Toasts", en: "Toasts", ar: "توست" }, icon: "🍞", sort_order: 12 },
+  { id: "omelettes", name: { fr: "Omelettes", en: "Omelettes", ar: "أومليت" }, icon: "🍳", sort_order: 13 },
+  { id: "mocktails", name: { fr: "Mocktails", en: "Mocktails", ar: "موكتيل" }, icon: "🍹", sort_order: 14 },
+  { id: "jus-presses", name: { fr: "Jus Pressés & Détox", en: "Fresh Juice & Detox", ar: "عصائر طبيعية" }, icon: "🍊", sort_order: 15 }
 ];
 
 export const MAMAKA_PRODUCTS = [
+  // Brunchs
+  {
+    category_id: "brunchs",
+    name: { fr: "Formule Brunch Complète", en: "Complete Brunch Formula", ar: "وجبة برانش كاملة" },
+    description: { fr: "Boisson chaude au choix, jus d'orange pressé, avocado toast avec œuf poché, pancakes au sirop d'érable et viennoiserie", en: "Hot drink of choice, fresh orange juice, avocado toast with poached egg, maple syrup pancakes and pastry", ar: "مشروب ساخن من اختيارك، عصير برتقال طازج، توست أفوكادو مع بيض مسلوق، بان كيك بشراب القيقب ومخبوزات" },
+    price: 2200,
+    media_type: "image",
+    media_url: "https://images.unsplash.com/photo-1533089860892-a7c6f0a88666?q=80&w=800",
+    available: true,
+    best_seller: true,
+    featured: true,
+    promotion: false,
+    ingredients: { fr: "Œufs, avocat, pain artisanal, pancakes, sirop d'érable, viennoiserie, jus d'orange, café/thé", en: "Eggs, avocado, artisan bread, pancakes, maple syrup, pastry, orange juice, coffee/tea", ar: "بيض، أفوكادو، خبز محلي، بان كيك، شراب القيقب، مخبوزات، عصير برتقال، قهوة/شاي" }
+  },
+  {
+    category_id: "brunchs",
+    name: { fr: "Avocado Toast & Œuf Poché", en: "Avocado Toast & Poached Egg", ar: "توست أفوكادو مع بيض مسلوق" },
+    description: { fr: "Pain de campagne grillé, écrasé d'avocat assaisonné, œuf poché coulant, graines de sésame et jeunes pousses", en: "Toasted sourdough bread, seasoned mashed avocado, runny poached egg, sesame seeds, and microgreens", ar: "خبز ريفي محمص، أفوكادو مهروس ومتبل، بيضة مسلوقة، بذور السمسم وأوراق خضراء" },
+    price: 1300,
+    media_type: "image",
+    media_url: "https://images.unsplash.com/photo-1525351484163-7529414344d8?q=80&w=800",
+    available: true,
+    best_seller: true,
+    featured: true,
+    promotion: false,
+    ingredients: { fr: "Pain de campagne, avocat, œuf poché, huile d'olive, citrons, sésame, sel de guérande", en: "Sourdough, avocado, poached egg, olive oil, lemon, sesame, sea salt", ar: "خبز ريفي، أفوكادو، بيض مسلوق، زيت زيتون، ليمون، سمسم، ملح البحر" }
+  },
+  {
+    category_id: "brunchs",
+    name: { fr: "Pancakes Moelleux Sirop d'Érable", en: "Fluffy Pancakes Maple Syrup", ar: "بان كيك هشة بشراب القيقب" },
+    description: { fr: "Stack de 3 pancakes moelleux, beurre d'Isigny, sirop d'érable bio et fruits frais de saison", en: "Stack of 3 fluffy pancakes, Isigny butter, organic maple syrup and fresh seasonal fruits", ar: "طبقات من 3 قطع بان كيك هشة، زبدة، شراب القيقب العضوي وفواكه طازجة حسب الموسم" },
+    price: 1100,
+    media_type: "image",
+    media_url: "https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?q=80&w=800",
+    available: true,
+    best_seller: false,
+    featured: true,
+    promotion: false,
+    ingredients: { fr: "Pancakes artisanaux, beurre, sirop d'érable, fraises, myrtilles, banane", en: "Artisanal pancakes, butter, maple syrup, strawberries, blueberries, banana", ar: "بان كيك منزلية، زبدة، شراب القيقب، فراولة، توت، موز" }
+  },
   // Pizza & Sandwich
   {
     category_id: "pizza-sandwich",

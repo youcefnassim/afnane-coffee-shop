@@ -22,6 +22,48 @@ export interface StoreProduct {
 
 const INITIAL_PRODUCTS: StoreProduct[] = [
   {
+    "id": "brunch-1",
+    "category_id": "brunchs",
+    "name": "Formule Brunch Complète",
+    "description": "Boisson chaude au choix, jus d'orange pressé, avocado toast avec œuf poché, pancakes au sirop d'érable et viennoiserie.",
+    "price": 2200,
+    "media_type": "image",
+    "media_url": "https://images.unsplash.com/photo-1533089860892-a7c6f0a88666?q=80&w=800",
+    "available": true,
+    "best_seller": true,
+    "featured": true,
+    "promotion": false,
+    "ingredients": "Œufs, avocat, pain artisanal, pancakes, sirop d'érable, viennoiserie, jus d'orange, café/thé"
+  },
+  {
+    "id": "brunch-2",
+    "category_id": "brunchs",
+    "name": "Avocado Toast & Œuf Poché",
+    "description": "Pain de campagne grillé, écrasé d'avocat assaisonné, œuf poché coulant, graines de sésame et jeunes pousses.",
+    "price": 1300,
+    "media_type": "image",
+    "media_url": "https://images.unsplash.com/photo-1525351484163-7529414344d8?q=80&w=800",
+    "available": true,
+    "best_seller": true,
+    "featured": true,
+    "promotion": false,
+    "ingredients": "Pain de campagne, avocat, œuf poché, huile d'olive, citrons, sésame"
+  },
+  {
+    "id": "brunch-3",
+    "category_id": "brunchs",
+    "name": "Pancakes Moelleux Sirop d'Érable",
+    "description": "Stack de 3 pancakes moelleux, beurre d'Isigny, sirop d'érable bio et fruits frais de saison.",
+    "price": 1100,
+    "media_type": "image",
+    "media_url": "https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?q=80&w=800",
+    "available": true,
+    "best_seller": false,
+    "featured": true,
+    "promotion": false,
+    "ingredients": "Pancakes artisanaux, beurre, sirop d'érable, fraises, myrtilles, banane"
+  },
+  {
     "id": "1",
     "category_id": "coffee",
     "name": "Espresso",

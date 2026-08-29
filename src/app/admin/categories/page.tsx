@@ -25,6 +25,7 @@ interface AdminCategory {
 }
 
 const DEFAULT_CATEGORIES: AdminCategory[] = [
+  { id: "brunchs", name: "Brunchs", icon: "🥐", itemCount: 3, status: "Active" },
   { id: "coffee", name: "Boissons chaudes", icon: "☕", itemCount: 0, status: "Active" },
   { id: "cold-drinks", name: "Boissons fresh", icon: "🧊", itemCount: 0, status: "Active" },
   { id: "mocktails", name: "Mocktail", icon: "🍹", itemCount: 0, status: "Active" },
