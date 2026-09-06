@@ -34,12 +34,18 @@ export default function AdminDailyMenuPage() {
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      setSelectedFile(file);
-      const url = URL.createObjectURL(file);
-      setImageUrl(url);
-      toast.success("Photo préparée pour l'envoi !");
-    }
+    if (!file) return;
+
+    setSelectedFile(file);
+
+    // Convert to base64 so it can be persisted permanently (no more blob: URLs)
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const base64 = reader.result as string;
+      setImageUrl(base64);
+      toast.success("Photo chargée ! Cliquez sur 'Publier' pour sauvegarder.");
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleSave = async (e: React.FormEvent) => {
@@ -50,11 +56,13 @@ export default function AdminDailyMenuPage() {
     }
 
     setIsUploading(true);
+    // imageUrl already contains the base64 or a proper URL at this point
     let finalImageUrl = imageUrl;
 
     try {
-      if (selectedFile) {
-        toast.loading("Enregistrement...", { id: "menu-save" });
+      // If we have a real file AND Supabase storage is available, try to upload
+      if (selectedFile && !imageUrl.startsWith("data:")) {
+        toast.loading("Upload de la photo...", { id: "menu-save" });
         try {
           const { uploadMedia } = await import("@/lib/storage");
           const uploadedUrl = await uploadMedia(selectedFile, "daily-menu");
@@ -63,7 +71,7 @@ export default function AdminDailyMenuPage() {
             setImageUrl(uploadedUrl);
           }
         } catch (uploadErr) {
-          console.warn("Could not upload image to cloud storage, saving locally:", uploadErr);
+          console.warn("Could not upload to cloud, keeping local base64:", uploadErr);
         }
       }
 
