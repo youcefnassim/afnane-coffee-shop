@@ -32,20 +32,49 @@ export default function AdminDailyMenuPage() {
 
   if (!mounted) return null;
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Compress image to max 800px wide and JPEG quality 0.7 so it fits in localStorage
+  const compressImage = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const img = new window.Image();
+        img.onload = () => {
+          const canvas = document.createElement("canvas");
+          const MAX_SIZE = 800;
+          let { width, height } = img;
+          if (width > MAX_SIZE) {
+            height = Math.round((height * MAX_SIZE) / width);
+            width = MAX_SIZE;
+          }
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext("2d");
+          if (!ctx) { reject(new Error("No canvas context")); return; }
+          ctx.drawImage(img, 0, 0, width, height);
+          resolve(canvas.toDataURL("image/jpeg", 0.75));
+        };
+        img.onerror = reject;
+        img.src = reader.result as string;
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    setSelectedFile(file);
-
-    // Convert to base64 so it can be persisted permanently (no more blob: URLs)
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      const base64 = reader.result as string;
-      setImageUrl(base64);
-      toast.success("Photo chargée ! Cliquez sur 'Publier' pour sauvegarder.");
-    };
-    reader.readAsDataURL(file);
+    try {
+      toast.loading("Chargement de la photo...", { id: "photo-load" });
+      const compressed = await compressImage(file);
+      setSelectedFile(file);
+      setImageUrl(compressed);
+      toast.success("Photo chargée ! Cliquez sur 'Publier' pour sauvegarder.", { id: "photo-load" });
+    } catch (err) {
+      console.error("Image compression error:", err);
+      toast.error("Erreur lors du chargement de la photo.", { id: "photo-load" });
+    }
   };
 
   const handleSave = async (e: React.FormEvent) => {
@@ -56,25 +85,9 @@ export default function AdminDailyMenuPage() {
     }
 
     setIsUploading(true);
-    // imageUrl already contains the base64 or a proper URL at this point
     let finalImageUrl = imageUrl;
 
     try {
-      // If we have a real file AND Supabase storage is available, try to upload
-      if (selectedFile && !imageUrl.startsWith("data:")) {
-        toast.loading("Upload de la photo...", { id: "menu-save" });
-        try {
-          const { uploadMedia } = await import("@/lib/storage");
-          const uploadedUrl = await uploadMedia(selectedFile, "daily-menu");
-          if (uploadedUrl) {
-            finalImageUrl = uploadedUrl;
-            setImageUrl(uploadedUrl);
-          }
-        } catch (uploadErr) {
-          console.warn("Could not upload to cloud, keeping local base64:", uploadErr);
-        }
-      }
-
       await updateDailyMenu({
         dishName,
         description,

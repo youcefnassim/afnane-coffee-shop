@@ -56,13 +56,21 @@ export const useDailyMenuStore = create<DailyMenuState>()(
           }
 
           if (data) {
+            // Get the current local state to preserve local base64 images
+            const currentMenu = get().menu;
+            const remoteImageUrl = data.image_url || "";
+            // Keep the local image if it's a base64 data URL (not yet synced to cloud)
+            const imageToUse = currentMenu.imageUrl.startsWith("data:")
+              ? currentMenu.imageUrl
+              : (remoteImageUrl || currentMenu.imageUrl);
+
             set({
               menu: {
                 title: data.title || "Menu du jour",
                 dishName: data.dish_name || "",
                 description: data.description || "",
                 price: Number(data.price),
-                imageUrl: data.image_url || "",
+                imageUrl: imageToUse,
                 date: data.updated_at ? data.updated_at.split("T")[0] : new Date().toISOString().split("T")[0],
               },
               isLoading: false,
@@ -76,21 +84,25 @@ export const useDailyMenuStore = create<DailyMenuState>()(
       },
 
       updateDailyMenu: async (updated) => {
-        // 1. Local update
+        // 1. Local update immediately
         set((state) => ({
           menu: { ...state.menu, ...updated },
         }));
 
-        // 2. Supabase update
+        // 2. Supabase update (skip base64 images - too large for DB column)
         if (isSupabaseConfigured()) {
           try {
             const current = get().menu;
+            const newImageUrl = updated.imageUrl !== undefined ? updated.imageUrl : current.imageUrl;
+            // Don't save base64 data URLs to Supabase (use the existing cloud URL or empty)
+            const imageUrlForDb = newImageUrl.startsWith("data:") ? (current.imageUrl.startsWith("data:") ? "" : current.imageUrl) : newImageUrl;
+
             const dbPayload = {
               id: 1,
               dish_name: updated.dishName !== undefined ? updated.dishName : current.dishName,
               description: updated.description !== undefined ? updated.description : current.description,
               price: updated.price !== undefined ? updated.price : current.price,
-              image_url: updated.imageUrl !== undefined ? updated.imageUrl : current.imageUrl,
+              image_url: imageUrlForDb,
               updated_at: new Date().toISOString(),
             };
 
