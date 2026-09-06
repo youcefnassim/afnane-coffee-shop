@@ -6,7 +6,6 @@ import { CalendarDays, Save, Upload, Sparkles } from "lucide-react";
 import { formatPrice } from "@/lib/utils";
 import { toast } from "sonner";
 import { useDailyMenuStore } from "@/store/useDailyMenuStore";
-import { MediaRenderer } from "@/components/shared/MediaRenderer";
 
 export default function AdminDailyMenuPage() {
   const { menu, updateDailyMenu } = useDailyMenuStore();
@@ -240,15 +239,17 @@ export default function AdminDailyMenuPage() {
 
           <div className="relative bg-[#F0EDE1] rounded-[28px] p-6 flex flex-col items-center text-center shadow-md border border-black/5 overflow-hidden">
             <div className="w-44 h-44 rounded-full overflow-hidden shadow-xl border-4 border-white mb-4">
-              <MediaRenderer
-                mediaType={
-                  selectedFile
-                    ? (selectedFile.type.startsWith("video") ? "video" : "image")
-                    : (imageUrl.endsWith(".mp4") || imageUrl.endsWith(".webm") || imageUrl.includes("video") || imageUrl.includes("mp4") ? "video" : "image")
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={
+                  imageUrl ||
+                  "https://images.unsplash.com/photo-1598514982205-f36b96d1e8d4?q=80&w=800&auto=format&fit=crop"
                 }
-                mediaUrl={imageUrl || "https://images.unsplash.com/photo-1598514982205-f36b96d1e8d4?q=80&w=800&auto=format&fit=crop"}
-                alt="Preview"
+                alt="Aperçu du plat"
                 className="w-full h-full object-cover"
+                onError={(e) => {
+                  (e.currentTarget as HTMLImageElement).src = "/logo.jpg";
+                }}
               />
             </div>
             <span className="text-xs font-bold uppercase tracking-widest text-primary mb-1">
