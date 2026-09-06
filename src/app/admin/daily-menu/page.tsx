@@ -26,38 +26,42 @@ export default function AdminDailyMenuPage() {
       setDishName(menu.dishName);
       setDescription(menu.description);
       setPrice(menu.price.toString());
-      setImageUrl(menu.imageUrl);
+      // Ignore bad cached URLs (octet-stream = old failed upload attempt)
+      const url = menu.imageUrl;
+      const isValid = url && !url.startsWith("data:application/");
+      setImageUrl(isValid ? url : "");
     }
   }, [menu]);
 
   if (!mounted) return null;
 
-  // Compress image to max 800px wide and JPEG quality 0.7 so it fits in localStorage
+  // Compress image using Canvas API (max 800px, JPEG 75%) to fit localStorage
+  // Uses createObjectURL instead of FileReader for broad format compatibility
   const compressImage = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const img = new window.Image();
-        img.onload = () => {
-          const canvas = document.createElement("canvas");
-          const MAX_SIZE = 800;
-          let { width, height } = img;
-          if (width > MAX_SIZE) {
-            height = Math.round((height * MAX_SIZE) / width);
-            width = MAX_SIZE;
-          }
-          canvas.width = width;
-          canvas.height = height;
-          const ctx = canvas.getContext("2d");
-          if (!ctx) { reject(new Error("No canvas context")); return; }
-          ctx.drawImage(img, 0, 0, width, height);
-          resolve(canvas.toDataURL("image/jpeg", 0.75));
-        };
-        img.onerror = reject;
-        img.src = reader.result as string;
+      const objectUrl = URL.createObjectURL(file);
+      const img = new window.Image();
+      img.onload = () => {
+        URL.revokeObjectURL(objectUrl);
+        const canvas = document.createElement("canvas");
+        const MAX_SIZE = 800;
+        let { width, height } = img;
+        if (width > MAX_SIZE) {
+          height = Math.round((height * MAX_SIZE) / width);
+          width = MAX_SIZE;
+        }
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) { reject(new Error("Canvas context unavailable")); return; }
+        ctx.drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL("image/jpeg", 0.75));
       };
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
+      img.onerror = () => {
+        URL.revokeObjectURL(objectUrl);
+        reject(new Error("Format d'image non supporté"));
+      };
+      img.src = objectUrl;
     });
   };
 
@@ -65,15 +69,21 @@ export default function AdminDailyMenuPage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    // Validate file type
+    if (!file.type.startsWith("image/")) {
+      toast.error("Veuillez choisir une image (JPG, PNG, WebP...)");
+      return;
+    }
+
     try {
-      toast.loading("Chargement de la photo...", { id: "photo-load" });
+      toast.loading("Compression de la photo...", { id: "photo-load" });
       const compressed = await compressImage(file);
       setSelectedFile(file);
       setImageUrl(compressed);
       toast.success("Photo chargée ! Cliquez sur 'Publier' pour sauvegarder.", { id: "photo-load" });
-    } catch (err) {
+    } catch (err: any) {
       console.error("Image compression error:", err);
-      toast.error("Erreur lors du chargement de la photo.", { id: "photo-load" });
+      toast.error(err?.message || "Format d'image non supporté. Essayez JPG ou PNG.", { id: "photo-load" });
     }
   };
 
