@@ -26,6 +26,8 @@ export default function AdminProductsPage() {
   const [search, setSearch] = useState("");
   const { products, toggleAvailability, deleteProduct, updateProduct } = useProductStore();
   const [editingProduct, setEditingProduct] = useState<StoreProduct | null>(null);
+  const [editMediaFile, setEditMediaFile] = useState<File | null>(null);
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>("all");
@@ -159,13 +161,42 @@ export default function AdminProductsPage() {
     );
   };
 
-  const handleSaveEdit = (e: React.FormEvent) => {
+  const handleSaveEdit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingProduct) return;
 
-    updateProduct(editingProduct.id, editingProduct);
-    toast.success(`Produit "${editingProduct.name}" mis à jour avec succès !`);
-    setEditingProduct(null);
+    setIsSavingEdit(true);
+    try {
+      toast.loading("Mise à jour du produit...", { id: "product-edit" });
+      let nextProduct = { ...editingProduct };
+
+      if (editMediaFile) {
+        const { uploadMedia } = await import("@/lib/storage");
+        const uploadedUrl = await uploadMedia(editMediaFile, "products");
+        nextProduct = {
+          ...nextProduct,
+          media_url: uploadedUrl,
+          media_type: editMediaFile.type.startsWith("video") || /\.(mp4|webm|mov)$/i.test(editMediaFile.name)
+            ? "video"
+            : "image",
+        };
+      }
+
+      if (nextProduct.media_url?.startsWith("blob:")) {
+        throw new Error("La photo/vidéo n'a pas pu être uploadée. Réessayez.");
+      }
+
+      await updateProduct(nextProduct.id, nextProduct);
+      toast.success(`Produit "${nextProduct.name}" mis à jour avec succès !`, { id: "product-edit" });
+      setEditingProduct(null);
+      setEditMediaFile(null);
+    } catch (error) {
+      console.error(error);
+      const message = error instanceof Error ? error.message : "Erreur lors de la mise à jour";
+      toast.error(message, { id: "product-edit" });
+    } finally {
+      setIsSavingEdit(false);
+    }
   };
 
 
@@ -406,7 +437,10 @@ export default function AdminProductsPage() {
                       </button>
 
                       <button
-                        onClick={() => setEditingProduct(product)}
+                        onClick={() => {
+                          setEditMediaFile(null);
+                          setEditingProduct(product);
+                        }}
                         className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-primary/10 transition-colors text-amber-500 hover:text-amber-600"
                         title="Modifier"
                       >
@@ -438,7 +472,10 @@ export default function AdminProductsPage() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-              onClick={() => setEditingProduct(null)}
+              onClick={() => {
+                setEditMediaFile(null);
+                setEditingProduct(null);
+              }}
             />
             <motion.div
               initial={{ scale: 0.9, opacity: 0 }}
@@ -450,7 +487,13 @@ export default function AdminProductsPage() {
                 <h3 className="text-lg font-bold text-dark dark:text-white" style={{ fontFamily: "var(--font-heading)" }}>
                   Modifier le produit
                 </h3>
-                <button onClick={() => setEditingProduct(null)} className="text-muted hover:text-dark">
+                <button
+                  onClick={() => {
+                    setEditMediaFile(null);
+                    setEditingProduct(null);
+                  }}
+                  className="text-muted hover:text-dark"
+                >
                   <X className="w-5 h-5" />
                 </button>
               </div>
@@ -501,28 +544,32 @@ export default function AdminProductsPage() {
                   <div className="flex flex-col sm:flex-row gap-2">
                     <input
                       type="text"
-                      value={editingProduct.media_url || ""}
-                      onChange={(e) => setEditingProduct({ ...editingProduct, media_url: e.target.value })}
+                      value={editingProduct.media_url?.startsWith("blob:") ? "" : editingProduct.media_url || ""}
+                      onChange={(e) => {
+                        setEditMediaFile(null);
+                        setEditingProduct({ ...editingProduct, media_url: e.target.value });
+                      }}
                       placeholder="/Video.mp4 ou https://..."
                       className="flex-1 min-w-0 px-4 py-2.5 rounded-xl border border-border dark:border-border-dark bg-background dark:bg-white/5 text-dark dark:text-white text-sm"
                     />
                     <input
                       type="file"
                       id="edit-media-upload"
-                      accept="video/*,image/*"
+                      accept="image/jpeg,image/png,image/webp,image/heic,image/heif,video/mp4,video/webm,.jpg,.jpeg,.png,.webp,.heic,.heif,.mp4,.webm,.mov"
                       className="hidden"
                       onChange={(e) => {
                         const file = e.target.files?.[0];
-                        if (file) {
-                          const isVideo = file.type.startsWith("video");
-                          const url = URL.createObjectURL(file);
-                          setEditingProduct({
-                            ...editingProduct,
-                            media_url: url,
-                            media_type: isVideo ? "video" : "image",
-                          });
-                          toast.success(`${isVideo ? "Vidéo" : "Photo"} chargée !`);
-                        }
+                        e.target.value = "";
+                        if (!file) return;
+                        const isVideo = file.type.startsWith("video") || /\.(mp4|webm|mov)$/i.test(file.name);
+                        const url = URL.createObjectURL(file);
+                        setEditMediaFile(file);
+                        setEditingProduct({
+                          ...editingProduct,
+                          media_url: url,
+                          media_type: isVideo ? "video" : "image",
+                        });
+                        toast.success(`${isVideo ? "Vidéo" : "Photo"} prête. Cliquez sur Enregistrer.`);
                       }}
                     />
                     <button
@@ -534,6 +581,9 @@ export default function AdminProductsPage() {
                       <span>Téléverser</span>
                     </button>
                   </div>
+                  {editMediaFile && (
+                    <p className="text-xs text-muted mt-2">Nouveau fichier : {editMediaFile.name}</p>
+                  )}
                 </div>
 
                 <div className="flex gap-4 pt-2">
@@ -560,16 +610,20 @@ export default function AdminProductsPage() {
                 <div className="pt-4 flex justify-end gap-2 border-t border-border/40">
                   <button
                     type="button"
-                    onClick={() => setEditingProduct(null)}
+                    onClick={() => {
+                      setEditMediaFile(null);
+                      setEditingProduct(null);
+                    }}
                     className="px-4 py-2 rounded-xl border border-border text-xs font-semibold text-muted hover:bg-primary/5"
                   >
                     Annuler
                   </button>
                   <button
                     type="submit"
-                    className="px-5 py-2 rounded-xl bg-primary text-white text-xs font-semibold hover:bg-primary-light transition-colors"
+                    disabled={isSavingEdit}
+                    className="px-5 py-2 rounded-xl bg-primary text-white text-xs font-semibold hover:bg-primary-light transition-colors disabled:opacity-60"
                   >
-                    Enregistrer
+                    {isSavingEdit ? "Enregistrement..." : "Enregistrer"}
                   </button>
                 </div>
               </form>

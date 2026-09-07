@@ -89,14 +89,15 @@ export default function NewProductPage() {
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      setSelectedFile(file);
-      const isVideo = file.type.startsWith("video");
-      const url = URL.createObjectURL(file);
-      setMediaUrl(url);
-      setMediaType(isVideo ? "video" : "image");
-      toast.success(`${isVideo ? "Vidéo" : "Photo"} préparée !`);
-    }
+    e.target.value = "";
+    if (!file) return;
+
+    const isVideo = file.type.startsWith("video") || /\.(mp4|webm|mov)$/i.test(file.name);
+    const url = URL.createObjectURL(file);
+    setSelectedFile(file);
+    setMediaUrl(url);
+    setMediaType(isVideo ? "video" : "image");
+    toast.success(`${isVideo ? "Vidéo" : "Photo"} prête. Cliquez sur « Créer et Publier ».`);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -110,18 +111,17 @@ export default function NewProductPage() {
     let finalMediaUrl = mediaUrl;
 
     try {
+      toast.loading("Enregistrement du produit...", { id: "product-save" });
+
       if (selectedFile) {
-        toast.loading("Enregistrement du produit...", { id: "product-save" });
-        try {
-          const { uploadMedia } = await import("@/lib/storage");
-          const uploadedUrl = await uploadMedia(selectedFile, "products");
-          if (uploadedUrl) {
-            finalMediaUrl = uploadedUrl;
-            setMediaUrl(uploadedUrl);
-          }
-        } catch (uploadErr) {
-          console.warn("Could not upload product media to cloud storage, saving locally:", uploadErr);
-        }
+        const { uploadMedia } = await import("@/lib/storage");
+        finalMediaUrl = await uploadMedia(selectedFile, "products");
+        setMediaUrl(finalMediaUrl);
+        setSelectedFile(null);
+      }
+
+      if (finalMediaUrl.startsWith("blob:")) {
+        throw new Error("La photo/vidéo n'a pas pu être uploadée. Réessayez.");
       }
 
       await addProduct({
@@ -131,7 +131,11 @@ export default function NewProductPage() {
         description,
         ingredients: ingredients || "Grains de café, eau",
         media_type: mediaType,
-        media_url: finalMediaUrl || (mediaType === "video" ? "/Video.mp4" : "https://images.unsplash.com/photo-1541167760496-1628856ab772?q=80&w=600&auto=format&fit=crop"),
+        media_url:
+          finalMediaUrl ||
+          (mediaType === "video"
+            ? "/Video.mp4"
+            : "https://images.unsplash.com/photo-1541167760496-1628856ab772?q=80&w=600&auto=format&fit=crop"),
         available: true,
         best_seller: bestSeller,
         featured: featured,
@@ -142,7 +146,8 @@ export default function NewProductPage() {
       router.push("/admin/products");
     } catch (error) {
       console.error("Error saving product:", error);
-      toast.error("Erreur lors de la sauvegarde", { id: "product-save" });
+      const message = error instanceof Error ? error.message : "Erreur lors de la sauvegarde";
+      toast.error(message, { id: "product-save" });
     } finally {
       setIsSubmitting(false);
     }
@@ -252,7 +257,7 @@ export default function NewProductPage() {
               <input
                 type="file"
                 id="new-media-upload"
-                accept="video/*,image/*"
+                accept="image/jpeg,image/png,image/webp,image/heic,image/heif,video/mp4,video/webm,.jpg,.jpeg,.png,.webp,.heic,.heif,.mp4,.webm,.mov"
                 className="hidden"
                 onChange={handleFileUpload}
               />

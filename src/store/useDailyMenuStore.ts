@@ -84,18 +84,21 @@ export const useDailyMenuStore = create<DailyMenuState>()(
       },
 
       updateDailyMenu: async (updated) => {
-        // 1. Local update immediately
         set((state) => ({
           menu: { ...state.menu, ...updated },
         }));
 
-        // 2. Supabase update (skip base64 images - too large for DB column)
         if (isSupabaseConfigured()) {
           try {
             const current = get().menu;
             const newImageUrl = updated.imageUrl !== undefined ? updated.imageUrl : current.imageUrl;
-            // Don't save base64 data URLs to Supabase (use the existing cloud URL or empty)
-            const imageUrlForDb = newImageUrl.startsWith("data:") ? (current.imageUrl.startsWith("data:") ? "" : current.imageUrl) : newImageUrl;
+            // Never persist ephemeral blob: URLs; keep previous cloud/local URL instead
+            const imageUrlForDb =
+              newImageUrl.startsWith("blob:")
+                ? (current.imageUrl.startsWith("blob:") ? "" : current.imageUrl)
+                : newImageUrl.startsWith("data:")
+                  ? ""
+                  : newImageUrl;
 
             const dbPayload = {
               id: 1,
@@ -110,9 +113,17 @@ export const useDailyMenuStore = create<DailyMenuState>()(
               .from("daily_menu")
               .upsert(dbPayload, { onConflict: "id" });
 
-            if (error) console.error("Supabase daily menu update error:", error);
-          } catch (err: any) {
+            if (error) {
+              console.error("Supabase daily menu update error:", error);
+              throw new Error(
+                error.message?.includes("row-level security")
+                  ? "Permission refusée sur daily_menu (RLS). Connectez-vous via Supabase Auth ou assouplissez les policies."
+                  : error.message || "Erreur Supabase menu du jour"
+              );
+            }
+          } catch (err: unknown) {
             console.error("Failed to update daily menu in Supabase:", err);
+            throw err instanceof Error ? err : new Error("Échec de sauvegarde du menu du jour");
           }
         }
       },

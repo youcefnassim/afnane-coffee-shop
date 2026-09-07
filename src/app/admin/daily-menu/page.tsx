@@ -6,17 +6,20 @@ import { CalendarDays, Save, Upload, Sparkles } from "lucide-react";
 import { formatPrice } from "@/lib/utils";
 import { toast } from "sonner";
 import { useDailyMenuStore } from "@/store/useDailyMenuStore";
+import { isLikelyImage, createPreviewUrl } from "@/lib/prepareMedia";
+import { uploadMedia } from "@/lib/storage";
+import { isSupabaseConfigured } from "@/lib/supabase";
 
 export default function AdminDailyMenuPage() {
   const { menu, updateDailyMenu } = useDailyMenuStore();
   const [mounted, setMounted] = useState(false);
 
-  // Form states
   const [dishName, setDishName] = useState("");
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
   const [imageUrl, setImageUrl] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
 
   useEffect(() => {
@@ -25,64 +28,41 @@ export default function AdminDailyMenuPage() {
       setDishName(menu.dishName);
       setDescription(menu.description);
       setPrice(menu.price.toString());
-      // Ignore bad cached URLs (octet-stream = old failed upload attempt)
       const url = menu.imageUrl;
-      const isValid = url && !url.startsWith("data:application/");
+      const isValid = url && !url.startsWith("data:application/") && !url.startsWith("blob:");
       setImageUrl(isValid ? url : "");
     }
   }, [menu]);
 
-  if (!mounted) return null;
+  useEffect(() => {
+    return () => {
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+    };
+  }, [previewUrl]);
 
-  // Compress image using Canvas API (max 800px, JPEG 75%) to fit localStorage
-  // Uses createObjectURL instead of FileReader for broad format compatibility
-  const compressImage = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const objectUrl = URL.createObjectURL(file);
-      const img = new window.Image();
-      img.onload = () => {
-        URL.revokeObjectURL(objectUrl);
-        const canvas = document.createElement("canvas");
-        const MAX_SIZE = 800;
-        let { width, height } = img;
-        if (width > MAX_SIZE) {
-          height = Math.round((height * MAX_SIZE) / width);
-          width = MAX_SIZE;
-        }
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext("2d");
-        if (!ctx) { reject(new Error("Canvas context unavailable")); return; }
-        ctx.drawImage(img, 0, 0, width, height);
-        resolve(canvas.toDataURL("image/jpeg", 0.75));
-      };
-      img.onerror = () => {
-        URL.revokeObjectURL(objectUrl);
-        reject(new Error("Format d'image non supporté"));
-      };
-      img.src = objectUrl;
-    });
-  };
+  if (!mounted) return null;
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
+    e.target.value = "";
     if (!file) return;
 
-    // Validate file type
-    if (!file.type.startsWith("image/")) {
-      toast.error("Veuillez choisir une image (JPG, PNG, WebP...)");
+    if (!isLikelyImage(file)) {
+      toast.error("Veuillez choisir une image (JPG, PNG, WebP, HEIC...)");
       return;
     }
 
     try {
-      toast.loading("Compression de la photo...", { id: "photo-load" });
-      const compressed = await compressImage(file);
+      toast.loading("Préparation de la photo...", { id: "photo-load" });
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+      const nextPreview = createPreviewUrl(file);
+      setPreviewUrl(nextPreview);
       setSelectedFile(file);
-      setImageUrl(compressed);
-      toast.success("Photo chargée ! Cliquez sur 'Publier' pour sauvegarder.", { id: "photo-load" });
-    } catch (err: any) {
-      console.error("Image compression error:", err);
-      toast.error(err?.message || "Format d'image non supporté. Essayez JPG ou PNG.", { id: "photo-load" });
+      setImageUrl(nextPreview);
+      toast.success("Photo prête. Cliquez sur « Publier » pour l'enregistrer.", { id: "photo-load" });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Format d'image non supporté.";
+      toast.error(message, { id: "photo-load" });
     }
   };
 
@@ -97,27 +77,51 @@ export default function AdminDailyMenuPage() {
     let finalImageUrl = imageUrl;
 
     try {
+      toast.loading("Publication du menu du jour...", { id: "menu-save" });
+
+      if (selectedFile) {
+        if (!isSupabaseConfigured()) {
+          throw new Error("Supabase n'est pas configuré. Impossible d'uploader la photo.");
+        }
+        finalImageUrl = await uploadMedia(selectedFile, "daily-menu");
+        setImageUrl(finalImageUrl);
+        if (previewUrl) {
+          URL.revokeObjectURL(previewUrl);
+          setPreviewUrl(null);
+        }
+        setSelectedFile(null);
+      }
+
+      if (finalImageUrl.startsWith("blob:")) {
+        throw new Error("La photo n'a pas pu être uploadée. Réessayez.");
+      }
+
       await updateDailyMenu({
         dishName,
         description,
         price: Number(price),
-        imageUrl: finalImageUrl || "https://images.unsplash.com/photo-1598514982205-f36b96d1e8d4?q=80&w=800&auto=format&fit=crop",
+        imageUrl:
+          finalImageUrl ||
+          "https://images.unsplash.com/photo-1598514982205-f36b96d1e8d4?q=80&w=800&auto=format&fit=crop",
         date: new Date().toISOString().split("T")[0],
       });
 
-      toast.success("Menu du jour mis à jour avec succès ! 🌟", { id: "menu-save" });
-      setSelectedFile(null);
-    } catch (error: any) {
+      toast.success("Menu du jour mis à jour avec succès !", { id: "menu-save" });
+    } catch (error: unknown) {
       console.error("Error saving menu:", error);
-      toast.error(error.message || "Erreur lors de la sauvegarde", { id: "menu-save" });
+      const message = error instanceof Error ? error.message : "Erreur lors de la sauvegarde";
+      toast.error(message, { id: "menu-save" });
     } finally {
       setIsUploading(false);
     }
   };
 
+  const displayImage =
+    imageUrl ||
+    "https://images.unsplash.com/photo-1598514982205-f36b96d1e8d4?q=80&w=800&auto=format&fit=crop";
+
   return (
     <div className="p-4 sm:p-6 lg:p-8 max-w-5xl mx-auto space-y-8">
-      {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -128,7 +132,7 @@ export default function AdminDailyMenuPage() {
             className="text-2xl font-bold text-dark dark:text-white"
             style={{ fontFamily: "var(--font-heading)" }}
           >
-            Gestion du Menu du Jour 🌟
+            Gestion du Menu du Jour
           </h1>
           <p className="text-muted dark:text-muted-dark text-sm mt-1">
             Configurez le plat vedette affiché sur la bannière principale de la page d&apos;accueil.
@@ -136,9 +140,7 @@ export default function AdminDailyMenuPage() {
         </div>
       </motion.div>
 
-      {/* Main Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Form Column */}
         <motion.form
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
@@ -191,15 +193,18 @@ export default function AdminDailyMenuPage() {
             <div className="flex flex-col sm:flex-row gap-2">
               <input
                 type="text"
-                value={imageUrl}
-                onChange={(e) => setImageUrl(e.target.value)}
-                placeholder="https://... ou téléverser"
+                value={imageUrl.startsWith("blob:") ? "" : imageUrl}
+                onChange={(e) => {
+                  setSelectedFile(null);
+                  setImageUrl(e.target.value);
+                }}
+                placeholder="https://... ou téléverser une photo"
                 className="flex-1 min-w-0 px-4 py-2.5 rounded-xl border border-border dark:border-border-dark bg-background dark:bg-white/5 text-dark dark:text-white text-sm focus:outline-none focus:border-primary"
               />
               <input
                 type="file"
                 id="daily-menu-upload"
-                accept="video/*,image/*"
+                accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.jpg,.jpeg,.png,.webp,.heic,.heif"
                 className="hidden"
                 onChange={handleFileUpload}
               />
@@ -212,20 +217,23 @@ export default function AdminDailyMenuPage() {
                 <span>Téléverser</span>
               </button>
             </div>
+            {selectedFile && (
+              <p className="text-xs text-muted mt-2">Fichier sélectionné : {selectedFile.name}</p>
+            )}
           </div>
 
           <div className="pt-4 flex justify-end">
             <button
               type="submit"
-              className="btn-primary text-sm px-6 py-3 flex items-center gap-2 shadow-lg"
+              disabled={isUploading}
+              className="btn-primary text-sm px-6 py-3 flex items-center gap-2 shadow-lg disabled:opacity-60"
             >
               <Save className="w-4 h-4" />
-              Publier le Menu du Jour
+              {isUploading ? "Publication..." : "Publier le Menu du Jour"}
             </button>
           </div>
         </motion.form>
 
-        {/* Preview Column */}
         <motion.div
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
@@ -241,10 +249,7 @@ export default function AdminDailyMenuPage() {
             <div className="w-44 h-44 rounded-full overflow-hidden shadow-xl border-4 border-white mb-4">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src={
-                  imageUrl ||
-                  "https://images.unsplash.com/photo-1598514982205-f36b96d1e8d4?q=80&w=800&auto=format&fit=crop"
-                }
+                src={displayImage}
                 alt="Aperçu du plat"
                 className="w-full h-full object-cover"
                 onError={(e) => {

@@ -50,67 +50,66 @@ export default function AdminGalleryPage() {
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
-    if (files && files[0]) {
-      const file = files[0];
-      const isVideo = file.type.startsWith("video");
-      setIsUploading(true);
+    const file = files?.[0];
+    e.target.value = "";
+    if (!file) return;
 
-      if (!isSupabaseConfigured()) {
-        try {
-          const url = URL.createObjectURL(file);
-          const newItem = {
-            id: `local-${Date.now()}`,
-            type: isVideo ? "video" : "image",
-            category: newCategory,
-            url,
-            caption: file.name,
-          };
-          const newMedia = [newItem, ...media];
-          setMedia(newMedia);
-          localStorage.setItem("afnene_gallery", JSON.stringify(newMedia));
-          setIsModalOpen(false);
-          toast.success("Média ajouté localement !");
-        } catch (e) {
-          toast.error("Erreur d'ajout local");
-        } finally {
-          setIsUploading(false);
-        }
-        return;
-      }
+    const isVideo = file.type.startsWith("video") || /\.(mp4|webm|mov)$/i.test(file.name);
+    setIsUploading(true);
 
+    if (!isSupabaseConfigured()) {
       try {
-        toast.loading("Upload en cours...", { id: "upload" });
-        
-        // 1. Upload to Storage
-        const url = await uploadMedia(file, "gallery");
-        
-        if (!url) throw new Error("Failed to upload to storage");
-
-        // 2. Insert into DB
+        const url = URL.createObjectURL(file);
         const newItem = {
+          id: `local-${Date.now()}`,
           type: isVideo ? "video" : "image",
           category: newCategory,
-          url: url,
+          url,
           caption: file.name,
         };
-
-        const { data, error } = await supabase
-          .from("gallery")
-          .insert(newItem)
-          .select()
-          .single();
-
-        if (error) throw error;
-
-        setMedia([data, ...media]);
+        const newMedia = [newItem, ...media];
+        setMedia(newMedia);
+        localStorage.setItem("afnene_gallery", JSON.stringify(newMedia));
         setIsModalOpen(false);
-        toast.success(`${isVideo ? "Vidéo" : "Photo"} ajoutée à la galerie !`, { id: "upload" });
-      } catch (error: any) {
-        console.error("Error adding media:", error);
-        toast.error(`Erreur d'ajout: ${error.message || error}`, { id: "upload" });
+        toast.success("Média ajouté localement !");
+      } catch {
+        toast.error("Erreur d'ajout local");
       } finally {
         setIsUploading(false);
       }
+      return;
+    }
+
+    try {
+      toast.loading("Upload en cours...", { id: "upload" });
+
+      const url = await uploadMedia(file, "gallery");
+      if (!url) throw new Error("Failed to upload to storage");
+
+      const newItem = {
+        type: isVideo ? "video" : "image",
+        category: newCategory,
+        url: url,
+        caption: file.name,
+      };
+
+      const { data, error } = await supabase
+        .from("gallery")
+        .insert(newItem)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      setMedia([data, ...media]);
+      setIsModalOpen(false);
+      toast.success(`${isVideo ? "Vidéo" : "Photo"} ajoutée à la galerie !`, { id: "upload" });
+    } catch (error: unknown) {
+      console.error("Error adding media:", error);
+      const message = error instanceof Error ? error.message : String(error);
+      toast.error(`Erreur d'ajout: ${message}`, { id: "upload" });
+    } finally {
+      setIsUploading(false);
     }
   };
 
