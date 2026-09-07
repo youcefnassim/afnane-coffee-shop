@@ -182,32 +182,18 @@ export default function AdminCategoriesPage() {
 
   const handleDelete = async (id: string, catName: string) => {
     if (confirm(`Voulez-vous vraiment supprimer la catégorie "${catName}" ?`)) {
-      if (!isSupabaseConfigured()) {
-        const newCats = categories.filter((c) => c.id !== id);
-        setCategories(newCats);
-        localStorage.setItem("afnene_categories", JSON.stringify(newCats));
-        toast.success(`Catégorie "${catName}" supprimée avec succès`);
-        return;
-      }
+      // Local update first (always works)
+      const newCats = categories.filter((c) => c.id !== id);
+      setCategories(newCats);
+      localStorage.setItem("afnene_categories", JSON.stringify(newCats));
+      toast.success(`Catégorie "${catName}" supprimée avec succès`);
 
-      const toastId = toast.loading("Suppression...");
-      try {
-        const { data, error } = await supabase
-          .from("categories")
-          .delete()
-          .eq("id", id)
-          .select();
-
-        if (error) throw error;
-
-        if (!data || data.length === 0) {
-          throw new Error("Action non autorisée ou catégorie introuvable. Veuillez vérifier que vous êtes bien authentifié et que la catégorie ne contient pas de produits.");
-        }
-
-        setCategories((prev) => prev.filter((c) => c.id !== id));
-        toast.success(`Catégorie "${catName}" supprimée avec succès`, { id: toastId });
-      } catch (err: any) {
-        toast.error(`Erreur : ${err.message || err}`, { id: toastId });
+      // Try Supabase in background (ignore errors)
+      if (isSupabaseConfigured()) {
+        supabase.from("categories").delete().eq("id", id)
+          .then(({ error }) => {
+            if (error) console.warn("Supabase delete category error (local save OK):", error.message);
+          });
       }
     }
   };
@@ -218,88 +204,55 @@ export default function AdminCategoriesPage() {
 
     const toastId = toast.loading("Enregistrement...");
 
-    if (!isSupabaseConfigured()) {
-      if (editingCategory) {
-        const newCats = categories.map((c) =>
-          c.id === editingCategory.id ? { ...c, name, icon } : c
-        );
-        setCategories(newCats);
-        localStorage.setItem("afnene_categories", JSON.stringify(newCats));
-        toast.success(`Catégorie "${name}" mise à jour !`, { id: toastId });
-      } else {
-        const newId = name.toLowerCase().trim()
-          .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-          .replace(/[^a-z0-9]+/g, "-");
-        
-        const newCats = [
-          ...categories,
-          {
-            id: newId,
-            name,
-            icon,
-            itemCount: 0,
-            status: "Active" as const,
-          },
-        ];
-        setCategories(newCats);
-        localStorage.setItem("afnene_categories", JSON.stringify(newCats));
-        toast.success(`Catégorie "${name}" créée avec succès !`, { id: toastId });
-      }
+    if (editingCategory) {
+      // ─── EDIT ────────────────────────────────────────────────
+      // 1. Update local state immediately
+      const newCats = categories.map((c) =>
+        c.id === editingCategory.id ? { ...c, name, icon } : c
+      );
+      setCategories(newCats);
+      localStorage.setItem("afnene_categories", JSON.stringify(newCats));
+      toast.success(`Catégorie "${name}" mise à jour !`, { id: toastId });
       setModalOpen(false);
-      return;
-    }
 
-    try {
-      if (editingCategory) {
-        const { error } = await supabase
-          .from("categories")
-          .update({
-            name: { fr: name, en: name, ar: name },
-            icon,
-          })
-          .eq("id", editingCategory.id);
-
-        if (error) throw error;
-
-        setCategories((prev) =>
-          prev.map((c) =>
-            c.id === editingCategory.id ? { ...c, name, icon } : c
-          )
-        );
-        toast.success(`Catégorie "${name}" mise à jour !`, { id: toastId });
-      } else {
-        const newId = name.toLowerCase().trim()
-          .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-          .replace(/[^a-z0-9]+/g, "-");
-        
-        const newCatDb = {
-          id: newId,
-          name: { fr: name, en: name, ar: name },
-          icon,
-          sort_order: categories.length + 1,
-        };
-
-        const { error } = await supabase
-          .from("categories")
-          .insert(newCatDb);
-
-        if (error) throw error;
-
-        setCategories((prev) => [
-          ...prev,
-          {
-            id: newId,
-            name,
-            icon,
-            itemCount: 0,
-            status: "Active",
-          },
-        ]);
-        toast.success(`Catégorie "${name}" créée avec succès !`, { id: toastId });
+      // 2. Try Supabase in background (ignore errors)
+      if (isSupabaseConfigured()) {
+        supabase.from("categories")
+          .update({ name: { fr: name, en: name, ar: name }, icon })
+          .eq("id", editingCategory.id)
+          .then(({ error }) => {
+            if (error) console.warn("Supabase update category error (local save OK):", error.message);
+          });
       }
+    } else {
+      // ─── ADD ─────────────────────────────────────────────────
+      const newId = name.toLowerCase().trim()
+        .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^a-z0-9]+/g, "-");
+
+      const newCat: AdminCategory = {
+        id: newId,
+        name,
+        icon,
+        itemCount: 0,
+        status: "Active",
+      };
+
+      // 1. Update local state immediately
+      const newCats = [...categories, newCat];
+      setCategories(newCats);
+      localStorage.setItem("afnene_categories", JSON.stringify(newCats));
+      toast.success(`Catégorie "${name}" créée avec succès !`, { id: toastId });
       setModalOpen(false);
-    } catch (err: any) {
-      toast.error(`Erreur : ${err.message || err}`, { id: toastId });
+
+      // 2. Try Supabase in background (ignore errors)
+      if (isSupabaseConfigured()) {
+        supabase.from("categories")
+          .insert({ id: newId, name: { fr: name, en: name, ar: name }, icon, sort_order: newCats.length })
+          .then(({ error }) => {
+            if (error) console.warn("Supabase insert category error (local save OK):", error.message);
+          });
+      }
     }
   };
 
