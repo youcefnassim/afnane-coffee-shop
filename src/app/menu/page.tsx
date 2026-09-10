@@ -296,15 +296,15 @@ export default function MenuPage() {
                       {/* Media Header Preview */}
                       <div 
                         onClick={(e) => hasVideo && openMediaModal(e, product.name, product.media_url)}
-                        className="relative aspect-[4/3] bg-black overflow-hidden cursor-pointer"
+                        className="relative aspect-[4/3] bg-black/5 dark:bg-black/20 overflow-hidden cursor-pointer flex items-center justify-center"
                       >
                         {product.media_type === "video" && product.media_url ? (
-                          <video src={product.media_url} autoPlay muted loop playsInline className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                          <video src={product.media_url} autoPlay muted loop playsInline className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500" />
                         ) : (
                           <img
                             src={product.media_url || "https://images.unsplash.com/photo-1541167760496-1628856ab772?q=80&w=600&auto=format&fit=crop"}
                             alt={product.name}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                            className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500"
                           />
                         )}
 

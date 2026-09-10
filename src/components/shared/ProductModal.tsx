@@ -78,7 +78,7 @@ export function ProductModal({
 
             {/* Top Image/Video area */}
             <div
-              className="relative aspect-[4/3] w-full bg-black shrink-0 cursor-pointer overflow-hidden group"
+              className="relative aspect-[4/3] w-full bg-black/5 dark:bg-black/20 shrink-0 cursor-pointer overflow-hidden group flex items-center justify-center"
               onClick={() => {
                 if (hasVideo && onPlayVideo && product.media_url) {
                   onPlayVideo(name, product.media_url);
@@ -92,7 +92,7 @@ export function ProductModal({
                   muted
                   loop
                   playsInline
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                  className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-700"
                 />
               ) : (
                 <img
@@ -101,7 +101,7 @@ export function ProductModal({
                     "https://images.unsplash.com/photo-1541167760496-1628856ab772?q=80&w=600&auto=format&fit=crop"
                   }
                   alt={name}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                  className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-700"
                 />
               )}
 

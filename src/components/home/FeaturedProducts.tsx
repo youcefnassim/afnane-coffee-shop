@@ -87,14 +87,14 @@ export function FeaturedProducts() {
                 <motion.div 
                   whileHover={{ y: -8 }}
                   onClick={() => setSelectedProduct(item)}
-                  className="group relative aspect-square rounded-[24px] overflow-hidden cursor-pointer shadow-lg bg-black"
+                  className="group relative aspect-square rounded-[24px] overflow-hidden cursor-pointer shadow-lg bg-black/5 dark:bg-black/20 flex items-center justify-center"
                 >
                   {/* Background Image / Video preview */}
                   {item.media_type === "video" && item.media_url ? (
-                    <video src={item.media_url} autoPlay muted loop playsInline className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+                    <video src={item.media_url} autoPlay muted loop playsInline className="absolute inset-0 w-full h-full object-contain group-hover:scale-105 transition-transform duration-700" />
                   ) : (
                     <div 
-                      className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-110"
+                      className="absolute inset-0 bg-contain bg-no-repeat bg-center transition-transform duration-700 group-hover:scale-110"
                       style={{ backgroundImage: `url(${bgImage})` }}
                     />
                   )}
