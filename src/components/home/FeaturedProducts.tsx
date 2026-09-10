@@ -8,12 +8,14 @@ import { AnimationWrapper, StaggerContainer, StaggerItem } from "@/components/sh
 import { useCartStore } from "@/store/useCartStore";
 import { useProductStore, StoreProduct } from "@/store/useProductStore";
 import { Product } from "@/types/database";
+import { ProductModal } from "@/components/shared/ProductModal";
 
 export function FeaturedProducts() {
   const { addItem } = useCartStore();
   const { products } = useProductStore();
   const [mounted, setMounted] = useState(false);
   const [activeVideo, setActiveVideo] = useState<{ name: string; url: string } | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<StoreProduct | Product | null>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -84,7 +86,7 @@ export function FeaturedProducts() {
               <StaggerItem key={item.id}>
                 <motion.div 
                   whileHover={{ y: -8 }}
-                  onClick={() => hasVideo && setActiveVideo({ name: item.name, url: item.media_url || "/Video.mp4" })}
+                  onClick={() => setSelectedProduct(item)}
                   className="group relative aspect-square rounded-[24px] overflow-hidden cursor-pointer shadow-lg bg-black"
                 >
                   {/* Background Image / Video preview */}
@@ -200,6 +202,18 @@ export function FeaturedProducts() {
           </div>
         )}
       </AnimatePresence>
+
+      <ProductModal
+        product={selectedProduct}
+        isOpen={!!selectedProduct}
+        onClose={() => setSelectedProduct(null)}
+        onAddToCart={handleAddToCart}
+        categories={[]}
+        onPlayVideo={(name, url) => {
+          setSelectedProduct(null);
+          setActiveVideo({ name, url });
+        }}
+      />
     </section>
   );
 }

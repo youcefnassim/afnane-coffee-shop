@@ -21,6 +21,7 @@ import { formatPrice } from "@/lib/utils";
 import { useCartStore } from "@/store/useCartStore";
 import { useProductStore, StoreProduct } from "@/store/useProductStore";
 import { Product } from "@/types/database";
+import { ProductModal } from "@/components/shared/ProductModal";
 
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 
@@ -45,6 +46,7 @@ export default function MenuPage() {
   const [activeFilters, setActiveFilters] = useState<FilterType[]>([]);
   const [wishlist, setWishlist] = useState<string[]>([]);
   const [ingredientVideoModal, setIngredientVideoModal] = useState<{ name: string; videoUrl: string } | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<StoreProduct | Product | null>(null);
   const [mounted, setMounted] = useState(false);
 
   const { addItem } = useCartStore();
@@ -287,7 +289,8 @@ export default function MenuPage() {
                 return (
                   <div
                     key={product.id}
-                    className="group relative bg-card dark:bg-card-dark rounded-3xl overflow-hidden shadow-sm border border-border/60 dark:border-border-dark/60 flex flex-col justify-between hover:shadow-xl transition-all duration-300"
+                    onClick={() => setSelectedProduct(product)}
+                    className="group relative bg-card dark:bg-card-dark rounded-3xl overflow-hidden shadow-sm border border-border/60 dark:border-border-dark/60 flex flex-col justify-between hover:shadow-xl transition-all duration-300 cursor-pointer"
                   >
                     <div>
                       {/* Media Header Preview */}
@@ -436,6 +439,20 @@ export default function MenuPage() {
           </div>
         )}
       </AnimatePresence>
+
+      <ProductModal
+        product={selectedProduct}
+        isOpen={!!selectedProduct}
+        onClose={() => setSelectedProduct(null)}
+        onAddToCart={handleAddToCart}
+        categories={categories}
+        wishlist={wishlist}
+        onToggleWishlist={toggleWishlist}
+        onPlayVideo={(name, url) => {
+          setSelectedProduct(null);
+          setIngredientVideoModal({ name, videoUrl: url });
+        }}
+      />
 
       <Footer />
     </>
