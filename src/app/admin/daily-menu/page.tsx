@@ -9,6 +9,7 @@ import { useDailyMenuStore } from "@/store/useDailyMenuStore";
 import { isLikelyImage, createPreviewUrl } from "@/lib/prepareMedia";
 import { uploadMedia } from "@/lib/storage";
 import { isSupabaseConfigured } from "@/lib/supabase";
+import { ImageCropperModal } from "@/components/shared/ImageCropperModal";
 
 export default function AdminDailyMenuPage() {
   const { menu, updateDailyMenu } = useDailyMenuStore();
@@ -21,6 +22,7 @@ export default function AdminDailyMenuPage() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [cropImageSrc, setCropImageSrc] = useState<string | null>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -54,16 +56,25 @@ export default function AdminDailyMenuPage() {
 
     try {
       toast.loading("Préparation de la photo...", { id: "photo-load" });
-      if (previewUrl) URL.revokeObjectURL(previewUrl);
-      const nextPreview = createPreviewUrl(file);
-      setPreviewUrl(nextPreview);
-      setSelectedFile(file);
-      setImageUrl(nextPreview);
-      toast.success("Photo prête. Cliquez sur « Publier » pour l'enregistrer.", { id: "photo-load" });
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Format d'image non supporté.";
-      toast.error(message, { id: "photo-load" });
+      const reader = new FileReader();
+      reader.onload = () => {
+        setCropImageSrc(reader.result as string);
+        toast.dismiss("photo-load");
+      };
+      reader.readAsDataURL(file);
+    } catch (e) {
+      console.error(e);
+      toast.error("Format de fichier non supporté", { id: "photo-load" });
     }
+  };
+
+  const handleCropComplete = (croppedFile: File) => {
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    const nextPreview = createPreviewUrl(croppedFile);
+    setPreviewUrl(nextPreview);
+    setSelectedFile(croppedFile);
+    setImageUrl(nextPreview);
+    toast.success("Image recadrée et prête !");
   };
 
   const handleSave = async (e: React.FormEvent) => {
@@ -272,6 +283,14 @@ export default function AdminDailyMenuPage() {
           </div>
         </motion.div>
       </div>
+
+      <ImageCropperModal
+        isOpen={!!cropImageSrc}
+        imageSrc={cropImageSrc}
+        onClose={() => setCropImageSrc(null)}
+        onCropCompleteAction={handleCropComplete}
+        aspectRatio={1} // Keep it square for the daily menu badge
+      />
     </div>
   );
 }

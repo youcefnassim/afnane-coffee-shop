@@ -6,12 +6,14 @@ import { Plus, Trash2, Image as ImageIcon, Video, X, Upload } from "lucide-react
 import { toast } from "sonner";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 import { uploadMedia, deleteMedia } from "@/lib/storage";
+import { ImageCropperModal } from "@/components/shared/ImageCropperModal";
 
 export default function AdminGalleryPage() {
   const [media, setMedia] = useState<any[]>([]);
   const [activeCategory, setActiveCategory] = useState("All Media");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newCategory, setNewCategory] = useState("Coffee Shop");
+  const [cropImageSrc, setCropImageSrc] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -48,12 +50,27 @@ export default function AdminGalleryPage() {
     ? media 
     : media.filter(item => item.category === activeCategory);
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     const file = files?.[0];
     e.target.value = "";
     if (!file) return;
 
+    const isVideo = file.type.startsWith("video") || /\.(mp4|webm|mov)$/i.test(file.name);
+    
+    if (!isVideo) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        setCropImageSrc(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+      return;
+    }
+
+    processUpload(file);
+  };
+
+  const processUpload = async (file: File) => {
     const isVideo = file.type.startsWith("video") || /\.(mp4|webm|mov)$/i.test(file.name);
     setIsUploading(true);
 
@@ -126,7 +143,6 @@ export default function AdminGalleryPage() {
 
     const toastId = toast.loading("Suppression...");
     try {
-      // 1. Delete from DB first to ensure permission/RLS allows it
       const { data, error } = await supabase
         .from("gallery")
         .delete()
@@ -139,7 +155,6 @@ export default function AdminGalleryPage() {
         throw new Error("Action non autorisée ou média introuvable. Veuillez vérifier vos accès.");
       }
 
-      // 2. Delete from Storage if it's in our bucket and DB deletion succeeded
       if (url && url.includes("afnene-media")) {
         await deleteMedia(url);
       }
@@ -154,16 +169,14 @@ export default function AdminGalleryPage() {
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 max-w-7xl">
-      {/* Hidden File Input */}
       <input 
         type="file" 
         ref={fileInputRef} 
         accept="image/*,video/*" 
         className="hidden" 
-        onChange={handleFileUpload} 
+        onChange={handleFileChange} 
       />
 
-      {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -189,7 +202,6 @@ export default function AdminGalleryPage() {
         </button>
       </motion.div>
 
-      {/* Filters */}
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -211,7 +223,6 @@ export default function AdminGalleryPage() {
         ))}
       </motion.div>
 
-      {/* Grid */}
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -258,7 +269,6 @@ export default function AdminGalleryPage() {
         ))}
       </motion.div>
 
-      {/* Upload Modal */}
       <AnimatePresence>
         {isModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -309,7 +319,17 @@ export default function AdminGalleryPage() {
           </div>
         )}
       </AnimatePresence>
+
+      <ImageCropperModal
+        isOpen={!!cropImageSrc}
+        imageSrc={cropImageSrc}
+        onClose={() => setCropImageSrc(null)}
+        onCropCompleteAction={(croppedFile) => {
+          setCropImageSrc(null);
+          processUpload(croppedFile);
+        }}
+        aspectRatio={4 / 3}
+      />
     </div>
   );
 }
-

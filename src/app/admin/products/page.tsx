@@ -21,6 +21,7 @@ import { formatPrice } from "@/lib/utils";
 import { toast } from "sonner";
 import { useProductStore, StoreProduct } from "@/store/useProductStore";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
+import { ImageCropperModal } from "@/components/shared/ImageCropperModal";
 
 export default function AdminProductsPage() {
   const [search, setSearch] = useState("");
@@ -31,6 +32,7 @@ export default function AdminProductsPage() {
   const [mounted, setMounted] = useState(false);
   const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>("all");
+  const [cropImageSrc, setCropImageSrc] = useState<string | null>(null);
 
   // Drag and drop states
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
@@ -143,6 +145,19 @@ export default function AdminProductsPage() {
   const handleDragEnd = () => {
     setDraggedIndex(null);
     setRowDraggableId(null);
+  };
+
+  const handleCropComplete = (croppedFile: File) => {
+    const url = URL.createObjectURL(croppedFile);
+    setEditMediaFile(croppedFile);
+    if (editingProduct) {
+      setEditingProduct({
+        ...editingProduct,
+        media_url: url,
+        media_type: "image",
+      });
+    }
+    toast.success(`Image recadrée et prête.`);
   };
 
   if (!mounted) return null;
@@ -562,14 +577,22 @@ export default function AdminProductsPage() {
                         e.target.value = "";
                         if (!file) return;
                         const isVideo = file.type.startsWith("video") || /\.(mp4|webm|mov)$/i.test(file.name);
-                        const url = URL.createObjectURL(file);
-                        setEditMediaFile(file);
-                        setEditingProduct({
-                          ...editingProduct,
-                          media_url: url,
-                          media_type: isVideo ? "video" : "image",
-                        });
-                        toast.success(`${isVideo ? "Vidéo" : "Photo"} prête. Cliquez sur Enregistrer.`);
+                        if (isVideo) {
+                          const url = URL.createObjectURL(file);
+                          setEditMediaFile(file);
+                          setEditingProduct({
+                            ...editingProduct,
+                            media_url: url,
+                            media_type: "video",
+                          });
+                          toast.success(`Vidéo prête. Cliquez sur Enregistrer.`);
+                        } else {
+                          const reader = new FileReader();
+                          reader.onload = () => {
+                            setCropImageSrc(reader.result as string);
+                          };
+                          reader.readAsDataURL(file);
+                        }
                       }}
                     />
                     <button
@@ -631,6 +654,14 @@ export default function AdminProductsPage() {
           </div>
         )}
       </AnimatePresence>
+
+      <ImageCropperModal
+        isOpen={!!cropImageSrc}
+        imageSrc={cropImageSrc}
+        onClose={() => setCropImageSrc(null)}
+        onCropCompleteAction={handleCropComplete}
+        aspectRatio={4 / 3}
+      />
     </div>
   );
 }

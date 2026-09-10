@@ -7,6 +7,7 @@ import Link from "next/link";
 import { toast } from "sonner";
 import { useProductStore } from "@/store/useProductStore";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
+import { ImageCropperModal } from "@/components/shared/ImageCropperModal";
 
 export default function NewProductPage() {
   const router = useRouter();
@@ -24,6 +25,7 @@ export default function NewProductPage() {
   const [featured, setFeatured] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [cropImageSrc, setCropImageSrc] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isSupabaseConfigured()) {
@@ -93,11 +95,29 @@ export default function NewProductPage() {
     if (!file) return;
 
     const isVideo = file.type.startsWith("video") || /\.(mp4|webm|mov)$/i.test(file.name);
-    const url = URL.createObjectURL(file);
-    setSelectedFile(file);
+    
+    if (isVideo) {
+      const url = URL.createObjectURL(file);
+      setSelectedFile(file);
+      setMediaUrl(url);
+      setMediaType("video");
+      toast.success(`Vidéo prête. Cliquez sur « Créer et Publier ».`);
+    } else {
+      // It's an image, open cropper
+      const reader = new FileReader();
+      reader.onload = () => {
+        setCropImageSrc(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleCropComplete = (croppedFile: File) => {
+    const url = URL.createObjectURL(croppedFile);
+    setSelectedFile(croppedFile);
     setMediaUrl(url);
-    setMediaType(isVideo ? "video" : "image");
-    toast.success(`${isVideo ? "Vidéo" : "Photo"} prête. Cliquez sur « Créer et Publier ».`);
+    setMediaType("image");
+    toast.success(`Image recadrée et prête.`);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -333,6 +353,14 @@ export default function NewProductPage() {
           </button>
         </div>
       </form>
+
+      <ImageCropperModal
+        isOpen={!!cropImageSrc}
+        imageSrc={cropImageSrc}
+        onClose={() => setCropImageSrc(null)}
+        onCropCompleteAction={handleCropComplete}
+        aspectRatio={4 / 3} // Maintain 4:3 for menu items
+      />
     </div>
   );
 }
